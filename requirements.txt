@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+numpy
+pandas
+matplotlib
+scikit-learn
+sqlalchemy
+pymysql
+python-dotenv
+pillow
+pydantic
+pydantic[email]
+python-multipart
+alembic

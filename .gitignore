@@ -1,0 +1,58 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+venv/
+.env
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Logs
+*.log
+
+# Test output
+pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# IDE and editor specific files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Python egg and wheel files
+*.egg
+*.whl
+
+# MyPy
+.mypy_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Alembic (migration files)
+migrations/versions/
+alembic.ini
+
+# SQLite database files
+*.sqlite3
+*.db
+
+# Cache dan artefak build lainnya
+*.cache
+*.log
+
+# Profiling data
+.prof
+
+# Pytest results
+.htmlcov/
+.tox/
+.pytest_cache/
