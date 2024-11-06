@@ -1,13 +1,13 @@
 from dataclasses import dataclass
+from ..user.user import User
 from datetime import datetime
 
 @dataclass
-class Participant:
-    participant_id: str
-    user_id: str
-    name: str
-    age: int
+class Participant: 
+    participant_name: str  
+    age: int   
     gender: str
-    amount: int
-    created_at: datetime
-    updated_at: datetime
+    created_at: datetime 
+    updated_at: datetime 
+    participant_id: str | None = None 
+    amount: int = 0 

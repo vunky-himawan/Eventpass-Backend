@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 from datetime import datetime
+from ..event_organizer.event_organizer import EventOrganizer
 
 @dataclass
 class Event:
     event_id: str
-    event_organizer_id: str
+    event_organizer: EventOrganizer
     thumbnail_path: str
     title: str
     address: str

@@ -56,3 +56,6 @@ alembic.ini
 .htmlcov/
 .tox/
 .pytest_cache/
+
+# Data files
+uploads/

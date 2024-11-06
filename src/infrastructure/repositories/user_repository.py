@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from ..models.user import UserModel
+from ..database.models.user import UserModel
 from ...domain.entities.user.user import User
 from fastapi import UploadFile
 import os
@@ -22,6 +22,7 @@ class UserRepository:
             email=email,
             profile_photo=photo_path
         )
+        
         self.db.add(db_user)
         self.db.commit()
         self.db.refresh(db_user)

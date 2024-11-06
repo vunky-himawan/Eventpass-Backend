@@ -41,20 +41,20 @@ load_dotenv()
 
 # Import models
 from infrastructure.config.database import Base
-from infrastructure.models.user import UserModel
-from infrastructure.models.participant import ParticipantModel
-from infrastructure.models.face_embeddings import FaceEmbeddingModel
-from infrastructure.models.transaction import TransactionModel
-from infrastructure.models.ticket import TicketModel
-from infrastructure.models.feedback_rating import FeedbackRatingModel
-from infrastructure.models.event_organizer import EventOrganizerModel
-from infrastructure.models.event import EventModel
-from infrastructure.models.speaker import SpeakerModel
-from infrastructure.models.organization_member import OrganizationMemberModel
-from infrastructure.models.event_employee import EventEmployeeModel
-from infrastructure.models.event_detail import EventDetailModel
-from infrastructure.models.notification import NotificationModel
-from infrastructure.models.attendance import AttendanceModel
+from infrastructure.database.models.user import UserModel
+from infrastructure.database.models.participant import ParticipantModel
+from infrastructure.database.models.face_embeddings import FaceEmbeddingModel
+from infrastructure.database.models.transaction import TransactionModel
+from infrastructure.database.models.ticket import TicketModel
+from infrastructure.database.models.feedback_rating import FeedbackRatingModel
+from infrastructure.database.models.event_organizer import EventOrganizerModel
+from infrastructure.database.models.event import EventModel
+from infrastructure.database.models.speaker import SpeakerModel
+from infrastructure.database.models.organization_member import OrganizationMemberModel
+from infrastructure.database.models.event_employee import EventEmployeeModel
+from infrastructure.database.models.event_detail import EventDetailModel
+from infrastructure.database.models.notification import NotificationModel
+from infrastructure.database.models.attendance import AttendanceModel
 
 target_metadata = Base.metadata
 
