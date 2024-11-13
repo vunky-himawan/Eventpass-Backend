@@ -39,7 +39,7 @@ coverage.xml
 
 # Alembic (migration files)
 migrations/versions/
-alembic.ini
+!alembic.ini
 
 # SQLite database files
 *.sqlite3
