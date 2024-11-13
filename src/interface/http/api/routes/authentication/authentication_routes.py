@@ -1,20 +1,20 @@
 from fastapi import APIRouter, Depends
-from ...schemas.result.success_response import SuccessResponse
-from ...schemas.result.error_response import ErrorResponse
-from ...schemas.registration.registration_schema import RegistrationRequest
+from interface.http.api.schemas.result.success_response import SuccessResponse
+from interface.http.api.schemas.result.error_response import ErrorResponse
+from interface.http.api.schemas.registration.registration_schema import RegistrationRequest
 from sqlalchemy.ext.asyncio import AsyncSession
-from ......infrastructure.config.database import get_db
-from ......domain.usecases.registration.registration_usecase import RegistrationUseCase
-from ......infrastructure.services.password_service import PasswordService
-from ......infrastructure.repositories.user.user_repository_implementation import UserRepositoryImplementation
-from ......infrastructure.repositories.authentication.authentication_repository_implementation import AuthenticationRepositoryImplementation
-from ......infrastructure.services.image_service import ImageService
-from ......infrastructure.services.face_recognition_service import FaceRecognitionService
-from ......domain.usecases.registration.registration_params import RegistrationParams
-from ...schemas.login.login_schema import LoginRequest
-from ......domain.usecases.login.login_usecase import LoginUseCase
-from ......infrastructure.services.jwt_token_service import JWTTokenService
-from ......domain.usecases.login.login_params import LoginParams
+from infrastructure.config.database import get_db
+from domain.usecases.registration.registration_usecase import RegistrationUseCase
+from infrastructure.services.password_service import PasswordService
+from infrastructure.repositories.user.user_repository_implementation import UserRepositoryImplementation
+from infrastructure.repositories.authentication.authentication_repository_implementation import AuthenticationRepositoryImplementation
+from infrastructure.services.image_service import ImageService
+from infrastructure.services.face_recognition_service import FaceRecognitionService
+from domain.usecases.registration.registration_params import RegistrationParams
+from interface.http.api.schemas.login.login_schema import LoginRequest
+from domain.usecases.login.login_usecase import LoginUseCase
+from infrastructure.services.jwt_token_service import JWTTokenService
+from domain.usecases.login.login_params import LoginParams
 
 router = APIRouter()
 def get_login_usecase(db: AsyncSession = Depends(get_db)) -> LoginUseCase:

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from fastapi import Form
-from ......domain.entities.enum.gender import Gender
+from domain.entities.enum.gender import Gender
 
 class Participant(BaseModel):
     participant_name: str

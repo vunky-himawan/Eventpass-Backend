@@ -1,12 +1,12 @@
-from ....domain.repositories.authentication.authentication_repository import AuthenticationRepository
-from ....infrastructure.services.password_service import PasswordService
-from ....domain.repositories.user.user_repository import UserRepository
-from .registration_params import RegistrationParams
-from ....domain.entities.result.result import Failed, Success, Result
-from ....domain.entities.user.user import User
-from ....domain.entities.enum.role import Role
-from ....infrastructure.services.image_service import ImageService
-from ....infrastructure.services.face_recognition_service import FaceRecognitionService
+from domain.repositories.authentication.authentication_repository import AuthenticationRepository
+from infrastructure.services.password_service import PasswordService
+from domain.repositories.user.user_repository import UserRepository
+from domain.usecases.registration.registration_params import RegistrationParams
+from domain.entities.result.result import Failed, Success, Result
+from domain.entities.user.user import User
+from domain.entities.enum.role import Role
+from infrastructure.services.image_service import ImageService
+from infrastructure.services.face_recognition_service import FaceRecognitionService
 
 class RegistrationUseCase:
     def __init__(self, password_service: PasswordService, user_repository: UserRepository, authentication_repository: AuthenticationRepository, image_service: ImageService, face_detection_service: FaceRecognitionService):

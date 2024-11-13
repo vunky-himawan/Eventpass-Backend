@@ -1,8 +1,8 @@
-from ....domain.repositories.authentication.authentication_repository import AuthenticationRepository
+from domain.repositories.authentication.authentication_repository import AuthenticationRepository
 from sqlalchemy.ext.asyncio import AsyncSession
-from ....domain.entities.result.result import Result, Failed, Success
-from ....domain.entities.user.user import User
-from ....infrastructure.database.models.user import UserModel
+from domain.entities.result.result import Result, Failed, Success
+from domain.entities.user.user import User
+from infrastructure.database.models.user import UserModel
 from sqlalchemy.future import select
 
 class AuthenticationRepositoryImplementation(AuthenticationRepository):
