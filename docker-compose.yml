@@ -1,0 +1,16 @@
+services:
+    mysql:
+        image: 'mysql/mysql-server:8.0'
+        network_mode: "host"
+        restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+            MYSQL_DATABASE: '${DB_NAME}'
+            MYSQL_USER: '${DB_USER}'
+            MYSQL_PASSWORD: '${DB_PASSWORD}'
+        # volumes:
+        #     - 'sail-mysql:/var/lib/mysql'
+        healthcheck:
+            test: ['CMD', 'mysqladmin', 'ping', '-p${DB_PASSWORD}']
+            retries: 3
+            timeout: 5s

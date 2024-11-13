@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ValidationError
-from ..participant.participant_schema import Participant
-from ..event_organizer.event_organizer_schema import EventOrganizer
+from interface.http.api.schemas.participant.participant_schema import Participant
+from interface.http.api.schemas.event_organizer.event_organizer_schema import EventOrganizer
 from fastapi import HTTPException
 from typing import Optional, Union, Set
 from fastapi import Form, File, UploadFile

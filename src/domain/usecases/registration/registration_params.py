@@ -1,5 +1,5 @@
-from ...entities.participant.participant import Participant
-from ...entities.event_organizer.event_organizer import EventOrganizer
+from domain.entities.participant.participant import Participant
+from domain.entities.event_organizer.event_organizer import EventOrganizer
 from fastapi import UploadFile
 
 class RegistrationParams:

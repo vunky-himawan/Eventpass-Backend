@@ -1,10 +1,10 @@
-from ....domain.repositories.user.user_repository import UserRepository
-from ....domain.repositories.authentication.authentication_repository import AuthenticationRepository
-from ....infrastructure.services.jwt_token_service import JWTTokenService
-from ....infrastructure.services.password_service import PasswordService
-from .login_params import LoginParams
-from ....domain.entities.result.result import Result, Failed, Success
-from ....domain.entities.user.user import User
+from domain.repositories.user.user_repository import UserRepository
+from domain.repositories.authentication.authentication_repository import AuthenticationRepository
+from infrastructure.services.jwt_token_service import JWTTokenService
+from infrastructure.services.password_service import PasswordService
+from domain.usecases.login.login_params import LoginParams
+from domain.entities.result.result import Result, Failed, Success
+from domain.entities.user.user import User
 
 class LoginUseCase:
     def __init__(self, 

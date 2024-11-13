@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from ....domain.entities.enum.role import Role
-from ....domain.entities.user.user import User
-from ....domain.entities.result.result import Result
-from ....domain.entities.participant.participant import Participant
-from ....domain.entities.event_organizer.event_organizer import EventOrganizer
+from domain.entities.enum.role import Role
+from domain.entities.user.user import User
+from domain.entities.result.result import Result
+from domain.entities.participant.participant import Participant
+from domain.entities.event_organizer.event_organizer import EventOrganizer
 
 class UserRepository(ABC):
     @abstractmethod

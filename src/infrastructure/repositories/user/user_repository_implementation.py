@@ -1,16 +1,16 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
-from ....domain.repositories.user.user_repository import UserRepository
-from ....domain.entities.user.user import User
-from ...database.models.user import UserModel
-from ....domain.entities.result.result import Failed, Success, Result
-from ....domain.entities.participant.participant import Participant
-from ....domain.entities.event_organizer.event_organizer import EventOrganizer
-from ....domain.entities.enum.role import Role
-from ....infrastructure.database.models.participant import ParticipantModel
-from ....infrastructure.database.models.face_embeddings import FaceEmbeddingModel
-from ....infrastructure.database.models.event_organizer import EventOrganizerModel
+from domain.repositories.user.user_repository import UserRepository
+from domain.entities.user.user import User
+from infrastructure.database.models.user import UserModel
+from domain.entities.result.result import Failed, Success, Result
+from domain.entities.participant.participant import Participant
+from domain.entities.event_organizer.event_organizer import EventOrganizer
+from domain.entities.enum.role import Role
+from infrastructure.database.models.participant import ParticipantModel
+from infrastructure.database.models.face_embeddings import FaceEmbeddingModel
+from infrastructure.database.models.event_organizer import EventOrganizerModel
 from datetime import datetime
 
 class UserRepositoryImplementation(UserRepository):

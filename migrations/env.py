@@ -1,83 +1,55 @@
 import os
 import sys
+import importlib
+from logging.config import fileConfig
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import DeclarativeMeta
+from alembic import context
 from dotenv import load_dotenv
 
-from logging.config import fileConfig
+# Load environment variables from .env file
+load_dotenv()
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+# Add the models directory to the sys path for dynamic imports
+models_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), './../src/infrastructure/database/models'))
+sys.path.append(models_directory)
 
-from alembic import context
+# Import the base class from the models (usually where your Base metadata is defined)
+from src.infrastructure.config.database import Base  # Update this import if your Base class is defined elsewhere
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
+# Automatically import all modules in the models directory
+def import_models(models_directory):
+    for filename in os.listdir(models_directory):
+        if filename.endswith(".py") and filename != "__init__.py":
+            # Module name with package context (use dots instead of slashes)
+            module_name = filename[:-3]  # Remove '.py' from the filename to get module name
+            module_path = f"src.infrastructure.database.models.{module_name}"
+            try:
+                importlib.import_module(module_path)  # Correctly import the module
+            except ModuleNotFoundError as e:
+                print(f"Module {module_path} could not be imported: {e}")
+
+# Run the model import function to load all models
+import_models(models_directory)
+
+# Set target_metadata to Base.metadata to support autogeneration
+target_metadata = Base.metadata
+
+# Alembic Config object to access the .ini file
 config = context.config
 
 # Interpret the config file for Python logging.
-# This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-target_metadata = None
-
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
-
-# Add src to path
-project_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../src"))
-sys.path.append(project_path)
-
-print("Project Path:", project_path)
-print("Updated sys.path:", sys.path)
-
-# Load environment variables
-load_dotenv()
-
-# Import models
-from infrastructure.config.database import Base
-from infrastructure.database.models.user import UserModel
-from infrastructure.database.models.participant import ParticipantModel
-from infrastructure.database.models.face_embeddings import FaceEmbeddingModel
-from infrastructure.database.models.transaction import TransactionModel
-from infrastructure.database.models.ticket import TicketModel
-from infrastructure.database.models.feedback_rating import FeedbackRatingModel
-from infrastructure.database.models.event_organizer import EventOrganizerModel
-from infrastructure.database.models.event import EventModel
-from infrastructure.database.models.speaker import SpeakerModel
-from infrastructure.database.models.organization_member import OrganizationMemberModel
-from infrastructure.database.models.event_employee import EventEmployeeModel
-from infrastructure.database.models.event_detail import EventDetailModel
-from infrastructure.database.models.notification import NotificationModel
-from infrastructure.database.models.attendance import AttendanceModel
-
-target_metadata = Base.metadata
-
-# Get DB URL from environment
-config = context.config
-DB_URL = f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}/{os.getenv('DB_NAME')}"
-config.set_main_option("sqlalchemy.url", DB_URL)
-
-target_metadata = Base.metadata
-
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode.
-
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
-
-    Calls to context.execute() here emit the given string to the
-    script output.
-
-    """
+    """Run migrations in 'offline' mode."""
     url = config.get_main_option("sqlalchemy.url")
+    url = url.replace("${DB_USER}", os.getenv("DB_USER"))
+    url = url.replace("${DB_PASSWORD}", os.getenv("DB_PASSWORD"))
+    url = url.replace("${DB_HOST}", os.getenv("DB_HOST"))
+    url = url.replace("${DB_NAME}", os.getenv("DB_NAME"))
+
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -88,30 +60,27 @@ def run_migrations_offline() -> None:
     with context.begin_transaction():
         context.run_migrations()
 
-
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
+    """Run migrations in 'online' mode."""
+    url = config.get_main_option("sqlalchemy.url")
+    url = url.replace("${DB_USER}", os.getenv("DB_USER"))
+    url = url.replace("${DB_PASSWORD}", os.getenv("DB_PASSWORD"))
+    url = url.replace("${DB_HOST}", os.getenv("DB_HOST"))
+    url = url.replace("${DB_NAME}", os.getenv("DB_NAME"))
 
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
-    """
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+    connectable = create_engine(url)
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata
         )
 
         with context.begin_transaction():
             context.run_migrations()
 
-
 if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
+

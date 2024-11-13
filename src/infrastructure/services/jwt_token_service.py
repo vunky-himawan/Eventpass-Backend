@@ -1,9 +1,9 @@
 import os
 from datetime import datetime, timedelta
-from ...domain.entities.user.user import User
+from domain.entities.user.user import User
 from jose import jwt
-from ...domain.entities.participant.participant import Participant
-from ...domain.entities.event_organizer.event_organizer import EventOrganizer
+from domain.entities.participant.participant import Participant
+from domain.entities.event_organizer.event_organizer import EventOrganizer
 
 class JWTTokenService:
     def __init__(self):
