@@ -52,7 +52,7 @@ Buka browser atau gunakan aplikasi seperti Postman untuk memeriksa endpoint API 
 
 # Migrasi Database
 
-1. Inisialisasi database dengan Alembic
+1. Inisialisasi database dengan Alembic (jangan di eksekusi apabila migration sudah ada dari upstream git)
 ```
 alembic init migrations
 ```
