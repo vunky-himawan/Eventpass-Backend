@@ -31,6 +31,7 @@ class UserRepositoryImplementation(UserRepository):
                 )
             
             except Exception as e:
+                print(e)
                 return Failed(message="Terjadi kesalahan")
 
             self._db_session.add(new_user_model)

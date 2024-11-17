@@ -41,3 +41,7 @@ class EventOrganizerModel(Base):
     user: Mapped["UserModel"] = relationship(
         "UserModel", back_populates="event_organizer"
     )
+
+    organization_members = relationship(
+        "OrganizationMemberModel", back_populates="event_organizer"
+    )

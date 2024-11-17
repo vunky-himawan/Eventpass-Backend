@@ -16,9 +16,8 @@ class OrganizationMemberModel(Base):
         String(36), ForeignKey("event_organizers.event_organizer_id"), nullable=False
     )
 
-    user: Mapped["UserModel"] = relationship(
-        "UserModel", back_populates="organization_members"
-    )
     event_organizer: Mapped["EventOrganizerModel"] = relationship(
         "EventOrganizerModel", back_populates="organization_members"
     )
+
+    user: Mapped["UserModel"] = relationship("UserModel", back_populates="organization_members")

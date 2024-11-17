@@ -37,6 +37,8 @@ class RegistrationRequest(BaseModel):
         parsed_details = None
         if details:
             try:
+                print("Received details:", details)
+                print("Type of details:", type(details))
                 details_dict = json.loads(details)
                 if role == "PARTICIPANT":
                     parsed_details = Participant(**details_dict)
