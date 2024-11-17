@@ -41,3 +41,4 @@ class EventModel(Base):
     updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     event_organizer: Mapped["EventOrganizerModel"] = relationship("EventOrganizerModel", back_populates="events")
+    organization_members: Mapped["OrganizationMemberModel"] = relationship("OrganizationMemberModel", back_populates="event_employees")

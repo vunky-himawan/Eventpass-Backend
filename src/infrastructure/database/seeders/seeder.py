@@ -3,7 +3,7 @@ from faker import Faker
 from random import choice
 from src.infrastructure.config.database import init_engine
 from src.infrastructure.services.password_service import PasswordService
-from src.infrastructure.database.models.user import UserModel, add_row
+from src.infrastructure.database.models.user import add_row
 import os
 
 class DataSeeder:
@@ -15,7 +15,7 @@ class DataSeeder:
 
     def seed_users(self, amount: int = 10):
         for _ in range(amount):
-            hashed_password = PasswordService().hash_password(self.fake.password())
+            hashed_password = PasswordService().hash_password('123')
             add_row(
                 self.engine, 
                 self.fake.user_name(), 

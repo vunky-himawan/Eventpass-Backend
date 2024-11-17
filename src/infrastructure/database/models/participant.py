@@ -40,3 +40,7 @@ class ParticipantModel(Base):
     user: Mapped["UserModel"] = relationship(
         "UserModel", back_populates="participant"
     )
+
+    face_embeddings: Mapped[list["FaceEmbeddingModel"]] = relationship(
+        "FaceEmbeddingModel", back_populates="participant"
+    )

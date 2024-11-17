@@ -36,14 +36,19 @@ class RegistrationRequest(BaseModel):
         parsed_details = None
         if details:
             try:
+                print("Received details:", details)
+                print("Type of details:", type(details))
                 details_dict = json.loads(details)
                 if role == "PARTICIPANT":
                     parsed_details = Participant(**details_dict)
                 elif role == "EVENT_ORGANIZER":
                     parsed_details = EventOrganizer(**details_dict)
-            except (json.JSONDecodeError, ValidationError) as e:
-                raise ValueError(f"Invalid details format: {str(e)}")
-
+            except json.JSONDecodeError as e:
+                print(f"JSONDecodeError: {e}")
+                raise ValueError(f"Invalid JSON format for 'details': {str(e)}")
+            except ValidationError as e:
+                print(f"Unexpected error: {e}")
+                raise ValueError(f"Validation error for 'details': {str(e)}")
         return cls(
             username=username,
             password=password,

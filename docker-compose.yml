@@ -1,5 +1,5 @@
 services:
-    mysql:
+    mysql-eventpass:
         image: 'mysql/mysql-server:8.0'
         network_mode: "host"
         restart: always

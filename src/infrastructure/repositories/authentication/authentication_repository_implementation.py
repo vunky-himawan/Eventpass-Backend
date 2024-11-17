@@ -21,7 +21,7 @@ class AuthenticationRepositoryImplementation(AuthenticationRepository):
             return Success(value=self._model_to_entity(user))
 
         except Exception as e:
-            print(e)
+            # print(e)
             return Failed(message=str(e))
 
     async def get_user_by_email(self, email: str) -> Result[User]:
