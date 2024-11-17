@@ -9,15 +9,16 @@ from domain.entities.participant.participant import Participant
 from domain.entities.event_organizer.event_organizer import EventOrganizer
 from domain.entities.enum.role import Role
 from infrastructure.database.models.participant import ParticipantModel
-from infrastructure.database.models.face_embeddings import FaceEmbeddingModel
+from infrastructure.database.models.face_photos import FacePhotoModel
 from infrastructure.database.models.event_organizer import EventOrganizerModel
 from datetime import datetime
+from typing import List
 
 class UserRepositoryImplementation(UserRepository):
     def __init__(self, db: AsyncSession):
         self._db_session = db
 
-    async def create_user(self, username: str, email: str, password: str, role: str, face_embedding: bytes | None = None, face_photo_path: str | None = None, details: Participant | EventOrganizer | None = None) -> Result[User]:
+    async def create_user(self, username: str, email: str, password: str, role: str, face_photo_paths: List[str] | None = None, details: Participant | EventOrganizer | None = None) -> Result[User]:
         try:
             if not all([username, email, password, role]):
                 raise ValueError("Email, username, password, dan role harus diisi")
@@ -55,16 +56,18 @@ class UserRepositoryImplementation(UserRepository):
                     self._db_session.add(new_participant)
                     await self._db_session.flush()
 
-                    if face_embedding and face_photo_path:
-                        embedding = FaceEmbeddingModel(
-                            participant_id=new_participant.participant_id,
-                            picture_path=face_photo_path,
-                            feature_vector=face_embedding
-                        )
+                    if face_photo_paths:
+                        for face_photo_path in face_photo_paths:
+                            embedding = FacePhotoModel(
+                                participant_id=new_participant.participant_id,
+                                picture_path=face_photo_path,
+                                created_at=datetime.now()
+                            )
 
-                        self._db_session.add(embedding)
+                            self._db_session.add(embedding)
+
                 except ValueError as e:
-                    print("ValueError: ", e)
+                    print("ERROR DI CREATE USER REPOSITORY IMPLEMENTATION: ", e)
                     await self._db_session.rollback()
                     return Failed(message="Terjadi kesalahan")
                 except Exception as e:

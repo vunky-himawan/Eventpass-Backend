@@ -1,11 +1,10 @@
 from dataclasses import dataclass
 from datetime import datetime
-from ..participant.participant import Participant
+from domain.entities.participant.participant import Participant
 
 @dataclass
-class FaceEmbedding:
-    face_embedding_id: str
+class FacePhoto:
+    face_photo_id: str
     participant: Participant
     picture_path: str
-    feature_vector: bytes
     created_at: datetime

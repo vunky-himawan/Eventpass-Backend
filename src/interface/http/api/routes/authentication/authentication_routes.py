@@ -98,6 +98,8 @@ async def register(
 
         result = await registration_usecase.call(params)
 
+        print(result.result_value())
+
         if result.is_success():
             return SuccessResponse(message="Pendaftaran berhasil", data=result.result_value().to_dict())
         else:

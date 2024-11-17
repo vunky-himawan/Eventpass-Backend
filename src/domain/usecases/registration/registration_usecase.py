@@ -46,19 +46,22 @@ class RegistrationUseCase:
                 # Save face photo
                 face_photo_path = self.image_service.save_face_data(image=params.face_photo, 
                                                                     username=params.username)
+                
+                face_photo_paths = self.image_service.augment_face(image_path=face_photo_path, 
+                                                                            username=params.username)
+                                                                            
+                face_photo_paths.append(face_photo_path)
 
-                # Get face embedding
-                face_embedding = self.face_detection_service.get_embedding(face_photo_path)
-                face_embedding_blob = self.face_detection_service.to_blob(face_embedding)
+                print(face_photo_paths)
 
                 new_user = await self.user_repository.create_user(username=params.username,
                                                                 password=hashed_password, 
                                                                 email=params.email, 
-                                                                role=params.role, 
-                                                                face_embedding=face_embedding_blob, 
-                                                                face_photo_path=face_photo_path,
+                                                                role=params.role,
+                                                                face_photo_paths=face_photo_paths,
                                                                 details=params.details)
-                print(new_user)
+                
+                print(new_user.error_message())
 
             elif params.role == Role.EVENT_ORGANIZER.value:
                 new_user = await self.user_repository.create_user(username=params.username, 

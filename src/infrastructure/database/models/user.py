@@ -28,10 +28,6 @@ class UserModel(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-<<<<<<< HEAD
-    participant: Mapped["ParticipantModel"] = relationship("ParticipantModel", back_populates="user")
-    event_organizer: Mapped["EventOrganizerModel"] = relationship("EventOrganizerModel", back_populates="user")
-=======
     participant: Mapped["ParticipantModel"] = relationship(
             "ParticipantModel", back_populates="user"
     )
@@ -39,7 +35,6 @@ class UserModel(Base):
         "EventOrganizerModel", back_populates="user"
     )
     organization_members: Mapped["OrganizationMemberModel"] = relationship("OrganizationMemberModel", back_populates="user")
->>>>>>> 52400babf73e40374011caae9f2881713178af24
 
 def add_row(engine, username: str, email: str, password: str, role: str, profile_photo_path: Optional[str]):
     new_row = UserModel(username=username, email=email, password=password, role=role, profile_photo_path=profile_photo_path)

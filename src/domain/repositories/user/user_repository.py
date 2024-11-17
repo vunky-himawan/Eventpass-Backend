@@ -4,10 +4,11 @@ from domain.entities.user.user import User
 from domain.entities.result.result import Result
 from domain.entities.participant.participant import Participant
 from domain.entities.event_organizer.event_organizer import EventOrganizer
+from typing import List
 
 class UserRepository(ABC):
     @abstractmethod
-    async def create_user(self, username: str, email: str, password: str, role: Role, face_embedding: bytes | None = None, face_photo_path: str | None = None, details: Participant | EventOrganizer | None = None) -> Result[User]:
+    async def create_user(self, username: str, email: str, password: str, role: Role, face_photo_paths: List[str] | None = None, details: Participant | EventOrganizer | None = None) -> Result[User]:
         pass
 
     @abstractmethod

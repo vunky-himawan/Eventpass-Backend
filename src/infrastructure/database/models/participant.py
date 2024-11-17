@@ -44,12 +44,6 @@ class ParticipantModel(Base):
         "UserModel", back_populates="participant"
     )
 
-<<<<<<< HEAD
-    face_embeddings: Mapped["FaceEmbeddingModel"] = relationship(
-        "FaceEmbeddingModel", back_populates="participant"
+    face_photos: Mapped["FacePhotoModel"] = relationship(
+        "FacePhotoModel", back_populates="participant"
     )
-=======
-    face_embeddings: Mapped[list["FaceEmbeddingModel"]] = relationship(
-        "FaceEmbeddingModel", back_populates="participant"
-    )
->>>>>>> 52400babf73e40374011caae9f2881713178af24
