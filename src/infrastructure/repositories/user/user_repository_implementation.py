@@ -44,6 +44,7 @@ class UserRepositoryImplementation(UserRepository):
                     new_participant = ParticipantModel(
                         participant_name=details.participant_name,
                         age=details.age,
+                        birth_date=details.birth_date,
                         gender=details.gender.value,
                         user_id=new_user_model.user_id,
                         created_at=datetime.now(),
@@ -62,9 +63,11 @@ class UserRepositoryImplementation(UserRepository):
 
                         self._db_session.add(embedding)
                 except ValueError as e:
+                    print("ValueError: ", e)
                     await self._db_session.rollback()
                     return Failed(message="Terjadi kesalahan")
                 except Exception as e:
+                    print("Exception: ", e)
                     await self._db_session.rollback()
                     return Failed(message="Terjadi kesalahan")
 
@@ -94,6 +97,7 @@ class UserRepositoryImplementation(UserRepository):
             return Success(value=self._model_to_entity(new_user_model))
 
         except Exception as e:
+            print("Exception: ", e)
             await self._db_session.rollback()
             return Failed(message="Terjadi kesalahan")
     

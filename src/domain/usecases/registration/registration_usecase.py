@@ -51,8 +51,6 @@ class RegistrationUseCase:
                 face_embedding = self.face_detection_service.get_embedding(face_photo_path)
                 face_embedding_blob = self.face_detection_service.to_blob(face_embedding)
 
-                print("hallo")
-
                 new_user = await self.user_repository.create_user(username=params.username,
                                                                 password=hashed_password, 
                                                                 email=params.email, 
@@ -60,6 +58,7 @@ class RegistrationUseCase:
                                                                 face_embedding=face_embedding_blob, 
                                                                 face_photo_path=face_photo_path,
                                                                 details=params.details)
+                print(new_user)
 
             elif params.role == Role.EVENT_ORGANIZER.value:
                 new_user = await self.user_repository.create_user(username=params.username, 
@@ -74,6 +73,8 @@ class RegistrationUseCase:
                 return Failed(message=new_user.error_message())
             
         except ValueError as e:
+            print("ValueError: ", e)
             return Failed(message="Terjadi kesalahan dalam proses pendaftaran")
         except Exception as e:
+            print("Exception: ", e)
             return Failed(message="Terjadi kesalahan dalam proses pendaftaran")

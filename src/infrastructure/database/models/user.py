@@ -28,6 +28,7 @@ class UserModel(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     participant: Mapped["ParticipantModel"] = relationship("ParticipantModel", back_populates="user")
+    event_organizer: Mapped["EventOrganizerModel"] = relationship("EventOrganizerModel", back_populates="user")
 
 def add_row(engine, username: str, email: str, password: str, role: str, profile_photo_path: Optional[str]):
     new_row = UserModel(username=username, email=email, password=password, role=role, profile_photo_path=profile_photo_path)

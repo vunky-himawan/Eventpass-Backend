@@ -17,13 +17,14 @@ class RegistrationRequest(BaseModel):
 
     @classmethod
     async def as_form(cls,
-        username: str = Form(..., min_length=3, max_length=50, regex="^[a-zA-Z0-9_]+$", description="Username", example="john_doe"),
-        password: str = Form(..., min_length=8, max_length=255, regex="^[a-zA-Z0-9_]+$", description="Password", example="password123"),
-        email: str = Form(..., min_length=3, max_length=100, regex="^[a-zA-Z0-9_.]+@[a-zA-Z0-9_.]+.[a-zA-Z]+$", description="Email address", example="john.doe@example.com"),
-        role: str = Form(..., example="PARTICIPANT"),
-        face_photo: Optional[UploadFile] = File(None, description="Profile photo"),
-        details: Optional[str] = Form(None, example='{"name": "John Doe", "address": "123 Main St", "phone_number": "555-1234", "email": "john.doe@example.com", "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit."}')
+        username: str = Form(...),
+        password: str = Form(...),
+        email: str = Form(...),
+        role: str = Form(...),
+        face_photo: Optional[UploadFile] = File(None),
+        details: Optional[str] = Form(None)
     ): 
+        # Validate image file
         if face_photo:
             try:
                 cls.validate_image_file(face_photo)
@@ -41,8 +42,10 @@ class RegistrationRequest(BaseModel):
                     parsed_details = Participant(**details_dict)
                 elif role == "EVENT_ORGANIZER":
                     parsed_details = EventOrganizer(**details_dict)
-            except (json.JSONDecodeError, ValidationError) as e:
-                raise ValueError(f"Invalid details format: {str(e)}")
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Invalid JSON format in 'details'. Please check your input. Error: {str(e)}")
+            except ValidationError as e:
+                raise ValueError(f"Invalid data for {role}. Validation error: {str(e)}")
 
         return cls(
             username=username,

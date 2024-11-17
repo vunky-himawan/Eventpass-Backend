@@ -1,4 +1,4 @@
-from sqlalchemy import SmallInteger, String, ForeignKey, Enum as SQLAlchemyEnum, Integer, DateTime
+from sqlalchemy import SmallInteger, String, ForeignKey, Enum as SQLAlchemyEnum, Integer, DateTime, Date
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import uuid
@@ -30,6 +30,9 @@ class ParticipantModel(Base):
     amount: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0
     )
+    birth_date: Mapped[Date] = mapped_column(
+        Date, nullable=False
+    )
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -39,4 +42,8 @@ class ParticipantModel(Base):
 
     user: Mapped["UserModel"] = relationship(
         "UserModel", back_populates="participant"
+    )
+
+    face_embeddings: Mapped["FaceEmbeddingModel"] = relationship(
+        "FaceEmbeddingModel", back_populates="participant"
     )
