@@ -27,3 +27,11 @@ class EventDetailModel(Base):
     speaker: Mapped["SpeakerModel"] = relationship("SpeakerModel", back_populates="event_details")
     employee: Mapped["EventEmployeeModel"] = relationship("EventEmployeeModel", back_populates="event_details")
 
+    def as_dict(self):
+        return {
+            "event_detail_id": self.event_detail_id,
+            "event_id": self.event,
+            "event_receiptionist": self.event_receiptionist,
+            "speaker": self.speaker
+        }
+

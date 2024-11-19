@@ -108,7 +108,6 @@ async def update_event(
     try:
         result = await event_update_use_case.call(event_id, params)
 
-        print(result)
         event_data = result["event"]
         return SuccessResponse(
             status="success",
@@ -118,7 +117,10 @@ async def update_event(
         )
     except Exception as e:
         print(e)
-        raise HTTPException(status_code=400, detail=str(e))
+        if e == "Event tidak ditemukan":
+            raise HTTPException(status_code=404, detail={"error": str(e)})
+        else:
+            raise HTTPException(status_code=400, detail={"error": str(e)})
 
 @router.delete(
     "/{event_id}",
@@ -135,7 +137,10 @@ async def delete_event(
     result = await event_delete_use_case.call(event_id)
 
     if "error" in result:
-        raise HTTPException(status_code=400, detail=result["error"])
+        if result["error"] == "Event tidak ditemukan":
+            raise HTTPException(status_code=404, detail=result["error"])
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
 
     return SuccessResponse(
         status="success",
