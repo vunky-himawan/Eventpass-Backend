@@ -14,7 +14,7 @@ class ImageService:
         self.storage_directory = storage_directory
         os.makedirs(self.storage_directory, exist_ok=True)
 
-    def save_image(self, image: UploadFile, filename: str) -> str:
+    def save_image(self, image: UploadFile, filename: str, subdir:str=None) -> str:
         # Mengambil ekstensi dari nama file
         file_extension = os.path.splitext(filename)[1]
         if not file_extension:
@@ -23,8 +23,15 @@ class ImageService:
         # Membaca file gambar menggunakan PIL
         try:
             image_data = Image.open(image.file)  # Membuka file gambar
+            filepath = None
+            if subdir:
+                os.makedirs(os.path.join(self.storage_directory, subdir), exist_ok=True)
             # Menyimpan gambar dengan kualitas tertentu
-            filepath = os.path.join(self.storage_directory, filename)
+            if not subdir:
+                filepath = os.path.join(self.storage_directory, filename)
+            else:
+                filepath = os.path.join(self.storage_directory, subdir.replace(" ", "_"), filename)
+
             image_data.save(filepath, format=image_data.format, quality=85, optimize=True)
             return filepath  # Kembalikan path ke gambar yang disimpan
         except Exception as e:

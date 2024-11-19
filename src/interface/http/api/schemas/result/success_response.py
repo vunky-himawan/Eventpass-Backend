@@ -1,7 +1,9 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Generic, Optional, TypeVar
 
-class SuccessResponse(BaseModel):
+T = TypeVar("T", bound=BaseModel)
+
+class SuccessResponse(BaseModel, Generic[T]):
     """Schema untuk response sukses"""
     status: str = "success"
     message: str

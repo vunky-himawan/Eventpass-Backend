@@ -38,10 +38,26 @@ class EventOrganizerModel(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    # user: Mapped["UserModel"] = relationship(
+    #     "UserModel", back_populates="event_organizer"
+    # )
+    #
+    # organization_members = relationship(
+    #     "OrganizationMemberModel", back_populates="event_organizer"
+    # )
+    #
+    # events: Mapped["EventModel"] = relationship(
+    #     "EventModel", back_populates="organizer"
+    # )
+
     user: Mapped["UserModel"] = relationship(
         "UserModel", back_populates="event_organizer"
     )
 
     organization_members = relationship(
         "OrganizationMemberModel", back_populates="event_organizer"
+    )
+
+    events: Mapped["EventModel"] = relationship(
+        "EventModel", back_populates="organizer"
     )

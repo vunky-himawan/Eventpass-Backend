@@ -1,5 +1,6 @@
 from sqlalchemy import String, DateTime
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from ...config.database import Base
 import uuid
 from sqlalchemy.sql import func
@@ -25,4 +26,6 @@ class SpeakerModel(Base):
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+    event_details: Mapped["EventDetailModel"] = relationship("EventDetailModel", back_populates="speaker")
 
