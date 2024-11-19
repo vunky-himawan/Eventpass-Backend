@@ -32,7 +32,7 @@ class ImageService:
             print(f"Error saving image: {e}")
             return None
         
-    def save_face_data(self, image: UploadFile, username: str) -> str:
+    def save_face_data(self, image: UploadFile, username: str) -> dict:
         detector = MTCNN()
 
         try:
@@ -41,15 +41,24 @@ class ImageService:
 
             # Check if the image is empty
             if image_array.size == 0:
-                raise ValueError("Gambar tidak ditemukan")
+                return {
+                    "status": "error",
+                    "message": "Gambar tidak ditemukan"
+                }
             
             # Mengambil data face
             faces = detector.detect_faces(image_array)
 
             if len(faces) == 0:
-                raise ValueError("Tidak ada wajah yang ditemukan")
+                return {
+                    "status": "error",
+                    "message": "Tidak ada wajah yang ditemukan"
+                }
             elif len(faces) > 1:
-                raise ValueError("Terdapat lebih dari satu wajah")
+                return {
+                    "status": "error",
+                    "message": "Terdapat lebih dari satu wajah"
+                }
 
             face = faces[0]
             x, y, width, height = face['box']
@@ -85,12 +94,16 @@ class ImageService:
             filepath = os.path.join(user_directory, filename)
             resized_image.save(filepath, format='JPEG', quality=95, optimize=True)
             
-            return filepath
+            return {
+                "status": "success",
+                "message": "Gambar berhasil disimpan",
+                "data": filepath
+            }
         
+        except ValueError as e:
+            raise ValueError("Terjadi kesalahan dalam memproses gambar")
         except Exception as e:
-            # Log the exception if needed
-            print(f"An error occurred: {e}")
-            raise ValueError("Terjadi kesalahan saat memproses gambar: " + str(e))
+            raise Exception("Terjadi kesalahan dalam memproses gambar")
         
 
     def augment_face(self, image_path: str, username: str) -> List[str]:

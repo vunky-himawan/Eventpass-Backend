@@ -48,7 +48,8 @@ async def login(request: LoginRequest, login_usecase: LoginUseCase = Depends(get
         if result.is_success():
             return SuccessResponse(message="Login successful", data=result.result_value())
         else:
-            return ErrorResponse(message="Login failed", data=result.error_message())
+            print(result.error_message())
+            return ErrorResponse(message="Login failed", detail=result.error_message())
 
     except ValueError as e:
         return ErrorResponse(message="Login failed", data=str(e))
@@ -98,15 +99,14 @@ async def register(
 
         result = await registration_usecase.call(params)
 
-        print(result.result_value())
-
         if result.is_success():
             return SuccessResponse(message="Pendaftaran berhasil", data=result.result_value().to_dict())
         else:
+            print(result.error_message())
             return ErrorResponse(message="Gagal dalam proses pendaftaran", detail=result.error_message())
         
     except ValueError as e:
-        print("ValueError: ", e)
+        print("ValueError DI AUTH ROUTES: ", e)
         return ErrorResponse(message="Gagal dalam proses pendaftaran", detail="Terjadi kesalahan")
     except Exception as e:
         print("Exception: ", e)

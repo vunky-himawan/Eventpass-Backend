@@ -16,12 +16,11 @@ class AuthenticationRepositoryImplementation(AuthenticationRepository):
             user = result.scalar_one_or_none()
 
             if user is None:
-                return Failed(message="User not found")
+                return Failed(message="Pengguna tidak ditemukan")
             
             return Success(value=self._model_to_entity(user))
 
         except Exception as e:
-            # print(e)
             return Failed(message=str(e))
 
     async def get_user_by_email(self, email: str) -> Result[User]:
