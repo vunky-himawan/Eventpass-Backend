@@ -27,5 +27,5 @@ class SpeakerModel(Base):
         DateTime(timezone=True), server_default=func.now()
     )
 
-    event_details: Mapped["EventDetailModel"] = relationship("EventDetailModel", back_populates="speaker")
+    event_details: Mapped["EventDetailModel"] = relationship("EventDetailModel", back_populates="speaker", cascade="all, delete-orphan")
 

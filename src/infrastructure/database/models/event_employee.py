@@ -24,5 +24,5 @@ class EventEmployeeModel(Base):
     organization_member: Mapped["OrganizationMemberModel"] = relationship(
         "OrganizationMemberModel", back_populates="employee"
     )
-    event_details: Mapped["EventDetailModel"] = relationship("EventDetailModel", back_populates="employee")
+    event_details: Mapped["EventDetailModel"] = relationship("EventDetailModel", back_populates="employee", cascade="all, delete-orphan")
 

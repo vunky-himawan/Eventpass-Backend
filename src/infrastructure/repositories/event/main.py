@@ -6,7 +6,7 @@ class EventRepositoryImplementation:
     def __init__(self, db):
         self.db = db
 
-    async def get_event(self, event_id:str):
+    async def get_event(self, event_id:str | uuid.UUID):
         try:
             events = await self.db.get(EventModel, event_id)
             return events
@@ -65,7 +65,6 @@ class EventRepositoryImplementation:
             # Refresh the instance to get updated data
             await self.db.refresh(event)
             return event
-
         except Exception as e:
             await self.db.rollback()
             print(f"Error updating event: {e}")
