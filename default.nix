@@ -1,4 +1,9 @@
 { pkgs ? import <nixpkgs> {} }:
+let
+  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [
+    "cuda-merged"
+  ];
+in
 (pkgs.buildFHSUserEnv {
   name = "pipzone";
   targetPkgs = pkgs: (with pkgs; [
@@ -9,11 +14,14 @@
 
     ffmpeg
     libGL
-    glibc
+    glib
+    #glibc
   ]);
-  runScript = "zsh";
+  runScript = "bash";
+
 
   profile = ''
-   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.libGL}/lib:${pkgs.glibc}/lib:/nix/store/pjxrn2wn0sn533p48jz5qxgjld84hn3i-glib-2.80.4/lib
+   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.libGL.out}/lib:${pkgs.glib.out}/lib
  '';
+ # :${pkgs.glibc}/lib
 }).env

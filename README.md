@@ -67,3 +67,26 @@ alembic revision --autogenerate -m "Initial migration"
 alembic upgrade head
 ```
 
+
+# For NIX Users
+1. Untuk pengguna NIX, gunakan perintah berikut untuk mengggunakan nix-shell:
+    ```
+    nix-shell .
+    ```
+2. Aktifkan virtual environment dengan perintah berikut:
+    ```
+    source venv/bin/activate
+    ```
+3. Install dependensi dengan perintah berikut:
+    ```
+    pip install -r requirements.txt
+    ```
+3. Jalankan server dengan perintah berikut:
+    - apabila menginstall fastapi[standard] atau fastapi[full], gunakan perintah berikut:
+        ```
+        fastapi dev src/main.py --reload --port 8000
+        ```
+    - apabila belum maka gunakan perintah berikut:
+        ```
+        uvicorn src.main:app --reload --port 8000
+        ```

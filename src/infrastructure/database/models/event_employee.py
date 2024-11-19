@@ -1,4 +1,7 @@
 from sqlalchemy import Column, String, ForeignKey
+
+from infrastructure.database.models.event_detail import EventDetailModel
+
 from ...config.database import Base
 import uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -13,6 +16,13 @@ class EventEmployeeModel(Base):
         String(36), ForeignKey("organization_members.organization_member_id"), nullable=False
     )
 
+    # organization_member: Mapped["OrganizationMemberModel"] = relationship(
+    #     "OrganizationMemberModel", back_populates="event_employees"
+    # )
+    # event: Mapped["EventModel"] = relationship("EventModel", back_populates="employee")
+
     organization_member: Mapped["OrganizationMemberModel"] = relationship(
-        "OrganizationMemberModel", back_populates="event_employees"
+        "OrganizationMemberModel", back_populates="employee"
     )
+    event_details: Mapped["EventDetailModel"] = relationship("EventDetailModel", back_populates="employee")
+
