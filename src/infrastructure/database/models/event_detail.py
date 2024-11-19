@@ -1,5 +1,8 @@
 from sqlalchemy import Column, String, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from infrastructure.database.models.speaker import SpeakerModel
+
 from ...config.database import Base
 import uuid
 
@@ -18,3 +21,9 @@ class EventDetailModel(Base):
     speaker_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("speakers.speaker_id"), nullable=False
     )
+
+    event: Mapped["EventModel"] = relationship("EventModel", back_populates="event_details")
+    event_receiptionist: Mapped["EventEmployeeModel"] = relationship("EventEmployeeModel", back_populates="event_details")
+    speaker: Mapped["SpeakerModel"] = relationship("SpeakerModel", back_populates="event_details")
+    employee: Mapped["EventEmployeeModel"] = relationship("EventEmployeeModel", back_populates="event_details")
+

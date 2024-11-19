@@ -1,4 +1,7 @@
 from sqlalchemy import String, Text, Integer, ForeignKey, Enum as SQLAlchemyEnum, DateTime
+
+from infrastructure.database.models.event_detail import EventDetailModel
+from infrastructure.database.models.event_employee import EventEmployeeModel
 from ...config.database import Base
 import uuid
 from sqlalchemy.sql import func
@@ -40,5 +43,25 @@ class EventModel(Base):
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    event_organizer: Mapped["EventOrganizerModel"] = relationship("EventOrganizerModel", back_populates="events")
-    organization_members: Mapped["OrganizationMemberModel"] = relationship("OrganizationMemberModel", back_populates="event_employees")
+    # organizer: Mapped["EventOrganizerModel"] = relationship("EventOrganizerModel", back_populates="events")
+    # employee: Mapped["EventEmployeeModel"] = relationship("EventEmployeeModel", back_populates="event")
+    
+    organizer: Mapped["EventOrganizerModel"] = relationship("EventOrganizerModel", back_populates="events")
+    event_details: Mapped["EventDetailModel"] = relationship("EventDetailModel", back_populates="event", cascade="all, delete-orphan")
+    # organization_members: Mapped["OrganizationMemberModel"] = relationship("OrganizationMemberModel", back_populates="event")
+
+    def as_dict(self):
+        return {
+            "event_id": self.event_id,
+            "event_organizer_id": self.event_organizer_id,
+            "thumbnail_path": self.thumbnail_path,
+            "title": self.title,
+            "address": self.address,
+            "description": self.description,
+            "type": self.type.name,
+            "status": self.status.name,
+            "ticket_price": self.ticket_price,
+            "ticket_quantity": self.ticket_quantity,
+            "start_date": self.start_date,
+        }
+

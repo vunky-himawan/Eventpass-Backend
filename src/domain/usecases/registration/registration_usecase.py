@@ -43,19 +43,29 @@ class RegistrationUseCase:
                                                                 details=params.details)
 
             elif params.role == Role.PARTICIPANT.value:
+                # Get face photo
+                face_photo = self.face_detection_service.detect_faces(image=params.face_photo)
+
+                if face_photo.get("status") == "error":
+                    return Failed(message=face_photo.get("message"))
+                
+                face_photo = self.face_detection_service.preprocess_image(face=face_photo.get("data").get("face"), 
+                                                                            image_array=face_photo.get("data").get("original_image"))
+                
+                print("Face photo: ", face_photo)
+                
                 # Save face photo
-                face_photo_path = self.image_service.save_face_data(image=params.face_photo, 
+                face_photo_path = self.image_service.save_face_data(image=face_photo, 
                                                                     username=params.username)
                 
                 if face_photo_path.get("status") == "error":
                     return Failed(message=face_photo_path.get("message"))
                 
-                face_photo_paths = self.image_service.augment_face(image_path=face_photo_path, 
+                print("Face photo path: ", face_photo_path['data'])
+                
+                face_photo_paths = self.image_service.augment_face(image_path=face_photo_path['data'], 
                                                                             username=params.username)
-                                                                            
-                face_photo_paths.append(face_photo_path)
-
-                print(face_photo_paths)
+                face_photo_paths.append(face_photo_path["data"])
 
                 new_user = await self.user_repository.create_user(username=params.username,
                                                                 password=hashed_password, 
@@ -80,5 +90,5 @@ class RegistrationUseCase:
             print("ValueError di REGISTRATION USE CASE: ", e)
             return Failed(message="Terjadi kesalahan dalam proses pendaftaran")
         except Exception as e:
-            print("Exception: ", e)
+            print("EXCEPTION di REGISTRATION USE CASE: ", e)
             return Failed(message="Terjadi kesalahan dalam proses pendaftaran")

@@ -1,9 +1,10 @@
 from pydantic import BaseModel, ValidationError
 from interface.http.api.schemas.participant.participant_schema import Participant
 from interface.http.api.schemas.event_organizer.event_organizer_schema import EventOrganizer
-from fastapi import HTTPException
+from fastapi import Body, HTTPException
 from typing import Optional, Union, Set
 from fastapi import Form, File, UploadFile
+import json_repair
 import json
 import imghdr
 
@@ -13,7 +14,7 @@ class RegistrationRequest(BaseModel):
     email: str
     role: str
     face_photo: Optional[UploadFile] = None
-    details: Optional[Union[Participant, EventOrganizer]] = None
+    details: Optional[Union[Participant, EventOrganizer]] = Body(None)
 
     @classmethod
     async def as_form(cls,
@@ -37,15 +38,15 @@ class RegistrationRequest(BaseModel):
         parsed_details = None
         if details:
             try:
-                print("Received details:", details)
-                print("Type of details:", type(details))
-                details_dict = json.loads(details)
+                repaired_details = json_repair.repair_json(details)
+                print("Received details:", repaired_details)
+                details_dict = json.loads(str(repaired_details))
                 if role == "PARTICIPANT":
                     parsed_details = Participant(**details_dict)
                 elif role == "EVENT_ORGANIZER":
                     parsed_details = EventOrganizer(**details_dict)
-            except json.JSONDecodeError as e:
-                raise ValueError(f"Invalid JSON format in 'details'. Please check your input. Error: {str(e)}")
+            # except json.JSONDecodeError as e:
+            #     raise ValueError(f"Invalid JSON format in 'details'. Please check your input. Error: {str(e)}")
             except ValidationError as e:
                 raise ValueError(f"Invalid data for {role}. Validation error: {str(e)}")
 
