@@ -122,9 +122,8 @@ async def update_event(
 
 @router.delete(
     "/{event_id}",
-    response_model=SuccessResponse[UpdateEventRequest],
     responses={
-        200: {"model": SuccessResponse[UpdateEventRequest]},
+        200: {"model": SuccessResponse},
         400: {"model": ErrorResponse},
         500: {"model": ErrorResponse}
     }
@@ -140,7 +139,7 @@ async def delete_event(
 
     return SuccessResponse(
         status="success",
-        message="Event deleted successfully",
-        data=None,
+        message=result["message"],
+        data={ "content": result["event"] },
         status_code=200
     )

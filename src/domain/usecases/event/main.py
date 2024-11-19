@@ -106,7 +106,7 @@ class EventDeleteUseCase:
             # Delete the event from the database
             await self.event_repository.delete_event(event_id)
 
-            return {"message": "Event deleted successfully"}
+            return {"message": "Event deleted successfully", "event": f"ID: {event_id} || Title: {current_event.title}"}
 
         except Exception as e:
             return {"message": f"Error deleting event: {str(e)}", "error": str(e)}
