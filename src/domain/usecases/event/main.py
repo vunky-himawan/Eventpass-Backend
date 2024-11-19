@@ -1,11 +1,12 @@
 import uuid
 from domain.entities.result.result import Failed
 from domain.params.event.main import EventCreationParams, UpdateEventParams
+from infrastructure.repositories.event.main import EventRepositoryImplementation
 from infrastructure.services.image_service import ImageService
 
 
 class EventCreationUseCase:
-    def __init__(self, image_service: ImageService, event_repository):
+    def __init__(self, image_service: ImageService, event_repository: EventRepositoryImplementation):
         self.image_service = image_service
         self.event_repository = event_repository
 
@@ -33,7 +34,6 @@ class EventCreationUseCase:
             )
 
             return {"message": "Event created successfully", "event": new_event.as_dict()}
-
         except Exception as e:
             return {"message": f"Error creating event: {str(e)}", "error": str(e)}
 
@@ -48,7 +48,7 @@ class EventUpdateUseCase:
             current_event = await self.event_repository.get_event(event_id)
 
             if (current_event is None):
-                return Failed(message="Event tidak ditemukan")
+                raise Exception("Event tidak ditemukan")
 
             # Initialize update_data as a dictionary to track changes
             update_data = {}
@@ -101,7 +101,7 @@ class EventDeleteUseCase:
             current_event = await self.event_repository.get_event(event_id)
 
             if (current_event is None):
-                return Failed(message="Event tidak ditemukan")
+                raise Exception("Event tidak ditemukan")
 
             # Delete the event from the database
             await self.event_repository.delete_event(event_id)
