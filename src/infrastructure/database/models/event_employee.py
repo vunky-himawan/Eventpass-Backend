@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, ForeignKey
+from sqlalchemy import Column, String, ForeignKey, desc
 
 from infrastructure.database.models.event_detail import EventDetailModel
 
@@ -22,7 +22,21 @@ class EventEmployeeModel(Base):
     # event: Mapped["EventModel"] = relationship("EventModel", back_populates="employee")
 
     organization_member: Mapped["OrganizationMemberModel"] = relationship(
-        "OrganizationMemberModel", back_populates="employee"
+        "OrganizationMemberModel", 
+        back_populates="employee",
+        lazy="joined",
     )
-    event_details: Mapped["EventDetailModel"] = relationship("EventDetailModel", back_populates="employee", cascade="all, delete-orphan")
+    # event_details: Mapped["EventDetailModel"] = relationship(
+    #         "EventDetailModel", 
+    #         back_populates="employee", 
+    #         cascade="all, delete-orphan"
+    # )
+
+    def as_dict(self):
+        return {
+            "event_employee_id": self.event_employee_id,
+            "organization_member_id": self.organization_member_id,
+            # "organization_member": self.organization_member,
+            # "event": self.event,
+        }
 
