@@ -1,7 +1,5 @@
-from sqlalchemy import Column, String, ForeignKey
+from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from infrastructure.database.models.speaker import SpeakerModel
 
 from ...config.database import Base
 import uuid
@@ -16,21 +14,30 @@ class EventDetailModel(Base):
         String(36), ForeignKey("events.event_id"), nullable=False
     )
     event_receiptionist_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("event_employees.event_employee_id"), nullable=False
-    )
-    speaker_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("speakers.speaker_id"), nullable=False
+        String(36), ForeignKey("organization_members.organization_member_id"), nullable=False
     )
 
-    event: Mapped["EventModel"] = relationship("EventModel", back_populates="event_details")
-    event_receiptionist: Mapped["EventEmployeeModel"] = relationship("EventEmployeeModel", back_populates="event_details")
-    speaker: Mapped["SpeakerModel"] = relationship("SpeakerModel", back_populates="event_details")
-    employee: Mapped["EventEmployeeModel"] = relationship("EventEmployeeModel", back_populates="event_details")
+    event: Mapped["EventModel"] = relationship(
+            "EventModel", 
+            back_populates="event_details",
+            lazy="joined",
+    )
+    event_receiptionist: Mapped["OrganizationMemberModel"] = relationship(
+            "OrganizationMemberModel", 
+            back_populates="event_details",
+            lazy="joined",
+    )
+    employee: Mapped["EventEmployeeModel"] = relationship(
+            "EventEmployeeModel", 
+            back_populates="event_details",
+            primaryjoin="EventDetailModel.event_detail_id == EventEmployeeModel.event_detail_id",
+            lazy="joined",
+    )
 
     def as_dict(self):
         return {
             "event_detail_id": self.event_detail_id,
-            "event_id": self.event,
+            # "event_id": self.event,
             "event_receiptionist": self.event_receiptionist,
             "speaker": self.speaker
         }
