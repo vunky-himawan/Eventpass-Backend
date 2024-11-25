@@ -16,10 +16,20 @@ class FacePhotoModel(Base):
     picture_path: Mapped[str] = mapped_column(
         String(255), nullable=False
     )
+    feature_vector: Mapped[bytes] = mapped_column(
+        LargeBinary, nullable=False
+    )
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
 
-    participant: Mapped["ParticipantModel"] = relationship(
-        "ParticipantModel", back_populates="face_photos"
-    )
+    participant: Mapped["ParticipantModel"] = relationship('ParticipantModel', uselist=False, back_populates="face_photos")
+
+    def to_dict(self):
+        return {
+            "face_photo_id": self.face_photo_id,
+            "participant_id": self.participant_id,
+            "picture_path": self.picture_path,
+            "feature_vector": self.feature_vector,
+            "created_at": self.created_at
+        }

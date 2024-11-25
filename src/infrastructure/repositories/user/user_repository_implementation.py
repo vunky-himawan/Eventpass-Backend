@@ -18,7 +18,7 @@ class UserRepositoryImplementation(UserRepository):
     def __init__(self, db: AsyncSession):
         self._db_session = db
 
-    async def create_user(self, username: str, email: str, password: str, role: str, face_photo_paths: List[str] | None = None, details: Participant | EventOrganizer | None = None) -> Result[User]:
+    async def create_user(self, username: str, email: str, password: str, role: str, feature_vector: bytes | None = None, picture_path: str | None = None, details: Participant | EventOrganizer | None = None) -> Result[User]:
         try:
             if not all([username, email, password, role]):
                 raise ValueError("Email, username, password, dan role harus diisi")
@@ -56,15 +56,14 @@ class UserRepositoryImplementation(UserRepository):
                     self._db_session.add(new_participant)
                     await self._db_session.flush()
 
-                    if face_photo_paths:
-                        for face_photo_path in face_photo_paths:
-                            embedding = FacePhotoModel(
-                                participant_id=new_participant.participant_id,
-                                picture_path=face_photo_path,
-                                created_at=datetime.now()
-                            )
+                    if feature_vector:
+                        feature = FacePhotoModel(
+                            participant_id=new_participant.participant_id,
+                            feature_vector=feature_vector,
+                            picture_path=picture_path
+                        )
 
-                            self._db_session.add(embedding)
+                        self._db_session.add(feature)
 
                 except ValueError as e:
                     print("ERROR DI CREATE USER REPOSITORY IMPLEMENTATION: ", e)
@@ -101,7 +100,7 @@ class UserRepositoryImplementation(UserRepository):
             return Success(value=self._model_to_entity(new_user_model))
 
         except Exception as e:
-            print("Exception: ", e)
+            print("EXCEPTION DI USER REPOSITORY IMPLEMENTATION: ", e)
             await self._db_session.rollback()
             return Failed(message="Terjadi kesalahan")
     
@@ -166,6 +165,38 @@ class UserRepositoryImplementation(UserRepository):
     async def get_users(self, skip: int = 0, limit: int = 10) -> Result[list[User | Participant | EventOrganizer]]:
         # Implement user retrieval logic
         pass
+
+    async def get_user_by_user_id(self, user_id: str) -> Result[dict]:
+        try:
+            query = select(UserModel).where(UserModel.user_id == user_id)
+            result = await self._db_session.execute(query)
+            user = result.scalar_one()
+
+            if user is None:
+                return Failed(message="User not found")
+            
+            return Success(value=user.to_dict())
+
+        except ValueError as e:
+            return Failed(message="Terjadi kesalahan")
+        except Exception as e:
+            return Failed(message="Terjadi kesalahan")
+        
+    async def get_user_by_username(self, username: str) -> Result[dict]:
+        try:
+            query = select(UserModel).where(UserModel.username == username)
+            result = await self._db_session.execute(query)
+            user = result.scalar_one()
+
+            if user is None:
+                return Failed(message="User not found")
+            
+            return Success(value=user.to_dict())
+
+        except ValueError as e:
+            return Failed(message="Terjadi kesalahan")
+        except Exception as e:
+            return Failed(message="Terjadi kesalahan")
 
     def _model_to_entity(self, model: UserModel) -> User:
         return User(

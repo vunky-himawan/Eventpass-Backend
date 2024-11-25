@@ -3,6 +3,7 @@ from ...config.database import Base
 import uuid
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import List
 
 class EventOrganizerModel(Base):
     __tablename__ = "event_organizers"
@@ -38,26 +39,19 @@ class EventOrganizerModel(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    # user: Mapped["UserModel"] = relationship(
-    #     "UserModel", back_populates="event_organizer"
-    # )
-    #
-    # organization_members = relationship(
-    #     "OrganizationMemberModel", back_populates="event_organizer"
-    # )
-    #
-    # events: Mapped["EventModel"] = relationship(
-    #     "EventModel", back_populates="organizer"
-    # )
+    user: Mapped["UserModel"] = relationship('UserModel', uselist=False, back_populates="event_organizer")
+    organization_member: Mapped["OrganizationMemberModel"] = relationship('OrganizationMemberModel', uselist=False, back_populates="event_organizer")
+    events: Mapped[List["EventModel"]] = relationship('EventModel', uselist=True, back_populates="event_organizer")
 
-    user: Mapped["UserModel"] = relationship(
-        "UserModel", back_populates="event_organizer"
-    )
-
-    organization_members = relationship(
-        "OrganizationMemberModel", back_populates="event_organizer"
-    )
-
-    events: Mapped["EventModel"] = relationship(
-        "EventModel", back_populates="organizer"
-    )
+    def to_dict(self):
+        return {
+            "event_organizer_id": self.event_organizer_id,
+            "organization_name": self.organization_name,
+            "address": self.address,
+            "phone_number": self.phone_number,
+            "email": self.email,
+            "description": self.description,
+            "amount": self.amount,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+        }

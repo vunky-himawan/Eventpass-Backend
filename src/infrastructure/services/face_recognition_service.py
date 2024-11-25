@@ -1,29 +1,23 @@
-import cv2
+from typing import Dict, List
 from deepface import DeepFace
 import numpy as np
 from fastapi import UploadFile
 from mtcnn import MTCNN
 from PIL import Image
+from scipy.spatial.distance import euclidean
 
 class FaceRecognitionService:
-    def get_embedding(self, image_path: str) -> np.ndarray:
-        img = cv2.imread(image_path)
-        if img is None:
-            raise ValueError("Image not found or unable to read.")
-
-        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-        result = DeepFace.represent(img_rgb, model_name="Facenet512")
-        
-        embedding = np.array(result[0]['embedding'])
-
-        return embedding
+    def __init__(self):
+        self.model = DeepFace.build_model(model_name='Facenet512')
     
-    def detect_faces(self, image: UploadFile) -> dict:
+    async def detect_faces(self, image: UploadFile) -> dict:
         try:
             detector = MTCNN()
 
             image = Image.open(image.file)
+        	
+            image = image.convert("RGB")
+
             image_array = np.array(image)
 
             # Check if the image is empty
@@ -60,7 +54,7 @@ class FaceRecognitionService:
             print(f"Error detecting faces: {e}")
             return False
         
-    def preprocess_image(self, face: np.ndarray, image_array: np.ndarray) -> Image:
+    async def extract_face(self, face: np.ndarray, image_array: np.ndarray) -> Image:
         try:
             x, y, width, height = face['box']
             
@@ -87,9 +81,66 @@ class FaceRecognitionService:
             return resized_image
         except Exception as e:
             print(f"Error preprocessing image: {e}")
+
+    async def feature_extraction(self, face_pixels: Image) -> dict:
+        try:
+            face_pixels = np.array(face_pixels)
+
+            # scale pixel values
+            face_pixels = face_pixels.astype('float32')
+            
+            # standardize pixel values across channels (global)
+            mean, std = face_pixels.mean(), face_pixels.std()
+            face_pixels = (face_pixels - mean) / std
+            
+            # transform face into one sample
+            samples = np.expand_dims(face_pixels, axis=0)
+            
+            # make prediction to get embedding
+            yhat = self.model.model.predict(samples)
+
+            return {"status": "success", "data": yhat[0]}
+        except Exception as e:
+            print(f"Error feature extraction: {e}")
+
+    async def predict(self, target_embedding: np.ndarray, val_embeddings: Dict[str, np.ndarray]) -> dict:
+        try:
+            best_match = None
+            best_distance = float('inf')
+            confidence = 0.0
+
+            for val_class, val_emb in val_embeddings.items():
+
+                distance = euclidean(target_embedding, val_emb)
+                
+                if distance < best_distance:
+                    best_distance = distance
+                    best_match = val_class
+
+            if best_match is not None:
+                all_distances = [
+                    euclidean(target_embedding, emb) for emb in val_embeddings.values()
+                ]
+                max_distance = max(all_distances) if all_distances else 1
+                confidence = 1 - (best_distance / max_distance)
+            else:
+                confidence = 0.0
+
+            response = {
+                "username": best_match,
+                "confidence": confidence,
+                "distance": best_distance,
+            }
+
+            return response
+        
+        except ValueError as e:
+            print(f"ValueError: {e}")
+        except Exception as e:
+            print(f"Error predicting: {e}")
     
-    def to_blob(self, face_embedding: np.ndarray) -> bytes:
+    async def to_blob(self, face_embedding: np.ndarray) -> bytes:
         return face_embedding.tobytes()
     
-    def from_blob(self, blob: bytes, dtype=np.float32, shape=(128,)) -> np.ndarray:
+    async def from_blob(self, blob: bytes, dtype=np.float32, shape=(128,)) -> np.ndarray:
         return np.frombuffer(blob, dtype=dtype).reshape(shape)

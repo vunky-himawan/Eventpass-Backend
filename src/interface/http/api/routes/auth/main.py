@@ -65,14 +65,14 @@ def get_registration_usecase(
     user_repository = UserRepositoryImplementation(db)
     authentication_repository = AuthenticationRepositoryImplementation(db)
     image_service = ImageService(storage_directory='uploads/dataset')
-    face_detection_service = FaceRecognitionService()
+    face_recognition_service = FaceRecognitionService()
     
     return RegistrationUseCase(
         password_service=password_service,
         user_repository=user_repository,
         authentication_repository=authentication_repository,
         image_service=image_service,
-        face_detection_service=face_detection_service
+        face_recignition_service=face_recognition_service
     )
 
 @router.post(
@@ -109,6 +109,6 @@ async def register(
         print("ValueError DI AUTH ROUTES: ", e)
         return ErrorResponse(message="Gagal dalam proses pendaftaran", detail="Terjadi kesalahan")
     except Exception as e:
-        print("Exception: ", e)
+        print("Exception DI AUTH ROUTES: ", e)
         return ErrorResponse(message="Gagal dalam proses pendaftaran", detail="Terjadi kesalahan")
     
