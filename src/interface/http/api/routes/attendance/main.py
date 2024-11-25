@@ -21,6 +21,7 @@ from infrastructure.repositories.participant.participant_repository_implementati
 from infrastructure.repositories.attendance.attendance_repository_implementation import AttendanceRepositoryImplementation
 from infrastructure.repositories.transaction.transaction_repository_implementation import TransactionRepositoryImplementation
 from infrastructure.repositories.user.user_repository_implementation import UserRepositoryImplementation
+from infrastructure.repositories.organization_member.organization_member_repository_implementation import OrganizationMemberRepositoryImplementation
 
 # Use Case
 from src.domain.usecases.attendance.attendance_usecase import AttendanceUseCase
@@ -40,6 +41,7 @@ def get_attendance_usecase(
 ) -> AttendanceUseCase:
     event_repository = EventRepositoryImplementation(db)
     user_repository = UserRepositoryImplementation(db)
+    organization_member_repository = OrganizationMemberRepositoryImplementation(db)
     ticket_repository = TicketRepositoryImplementation(db)
     face_recognition_repository = FaceRecognitionRepositoryImplementation(db)
     image_service = ImageService(storage_directory='uploads/dataset')
@@ -49,6 +51,7 @@ def get_attendance_usecase(
         user_repository=user_repository,
         event_repository=event_repository,
         face_recognition_service=face_recognition_service,
+        organization_member_repository=organization_member_repository,
         face_recognition_repository=face_recognition_repository,
         ticket_repository=ticket_repository,
         image_service=image_service
