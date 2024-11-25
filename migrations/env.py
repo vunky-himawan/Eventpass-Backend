@@ -14,23 +14,18 @@ load_dotenv()
 models_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), './../src/infrastructure/database/models'))
 sys.path.append(models_directory)
 
-# Import the base class from the models (usually where your Base metadata is defined)
-from src.infrastructure.config.database import Base  # Update this import if your Base class is defined elsewhere
+# Import the base class from the models (ensure only one correct import)
+from src.infrastructure.config.database import Base  # Correct the import if needed
 
-# Automatically import all modules in the models directory
-def import_models(models_directory):
-    for filename in os.listdir(models_directory):
-        if filename.endswith(".py") and filename != "__init__.py":
-            # Module name with package context (use dots instead of slashes)
-            module_name = filename[:-3]  # Remove '.py' from the filename to get module name
-            module_path = f"src.infrastructure.database.models.{module_name}"
-            try:
-                importlib.import_module(module_path)  # Correctly import the module
-            except ModuleNotFoundError as e:
-                print(f"Module {module_path} could not be imported: {e}")
+# Dynamically import models to avoid circular dependencies
+model_modules = [
+    'user', 'participant', 'face_photos', 'transaction', 'ticket', 'feedback_rating',
+    'event_organizer', 'event', 'speaker', 'event_speaker', 
+    'organization_member', 'notification', 'attendance'
+]
 
-# Run the model import function to load all models
-import_models(models_directory)
+for model in model_modules:
+    importlib.import_module(f"src.infrastructure.database.models.{model}")
 
 # Set target_metadata to Base.metadata to support autogeneration
 target_metadata = Base.metadata

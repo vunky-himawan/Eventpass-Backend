@@ -41,6 +41,17 @@ class TransactionModel(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    participant: Mapped["ParticipantModel"] = relationship(
-        "ParticipantModel", back_populates="transactions"
-    )
+    participant: Mapped["ParticipantModel"] = relationship('ParticipantModel', uselist=False, back_populates="transactions", lazy="joined")
+    ticket: Mapped["TicketModel"] = relationship('TicketModel', uselist=False, back_populates="transaction")
+
+    def to_dict(self):
+        return {
+            "transaction_id": self.transaction_id,
+            "participant_id": self.participant_id,
+            "title": self.title,
+            "amount": self.amount,
+            "category": self.category.name,
+            "status": self.status.name,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }

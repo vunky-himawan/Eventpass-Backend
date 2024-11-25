@@ -21,8 +21,6 @@ class LoginUseCase:
         try:
             user = await self.authentication_repository.get_user_by_username(params.username)
 
-            print(user.error_message())
-
             if user.is_success():
                 if self.password_service.verify_password(params.password, user.result_value().password):                
                     user = User(

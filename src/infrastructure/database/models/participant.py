@@ -4,6 +4,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 import uuid
 from ...config.database import Base
 import enum
+from typing import List
 
 class Gender(str, enum.Enum): 
     LAKI_LAKI = "LAKI_LAKI"
@@ -40,10 +41,21 @@ class ParticipantModel(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    user: Mapped["UserModel"] = relationship(
-        "UserModel", back_populates="participant"
-    )
+    user: Mapped["UserModel"] = relationship('UserModel', uselist=False, back_populates="participant")
+    transactions: Mapped[List["TransactionModel"]] = relationship('TransactionModel', uselist=True, back_populates="participant")
+    feedback_ratings: Mapped[List["FeedbackRatingModel"]] = relationship('FeedbackRatingModel', uselist=True, back_populates="participant")
+    face_photos: Mapped[List["FacePhotoModel"]] = relationship('FacePhotoModel', uselist=True, back_populates="participant")
+    attendances: Mapped[List["AttendanceModel"]] = relationship('AttendanceModel', uselist=True, back_populates="participant")
 
-    face_photos: Mapped["FacePhotoModel"] = relationship(
-        "FacePhotoModel", back_populates="participant"
-    )
+    def to_dict(self):
+        return {
+            "participant_id": self.participant_id,
+            "user_id": self.user_id,
+            "participant_name": self.participant_name,
+            "age": self.age,
+            "gender": self.gender.name,
+            "amount": self.amount,
+            "birth_date": self.birth_date,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }

@@ -40,16 +40,6 @@ DB_NAME=your_database
 UPLOAD_DIR=uploads
 ```
 
-# Menjalankan Project
-1. Jalankan server
-Gunakan perintah berikut untuk menjalankan server development:
-```
-uvicorn src.main:app --reload
-```
-
-2. Cek endpoint API
-Buka browser atau gunakan aplikasi seperti Postman untuk memeriksa endpoint API pada ```http://127.0.0.1:8000/docs``` untuk dokumentasi interaktif.
-
 # Migrasi Database
 
 1. Inisialisasi database dengan Alembic (jangan di eksekusi apabila migration sudah ada dari upstream git)
@@ -66,6 +56,21 @@ alembic revision --autogenerate -m "Initial migration"
 ```
 alembic upgrade head
 ```
+
+4. Jalankan seeder
+```
+python src/infrastructure/database/seeders/runner.py
+```
+
+# Menjalankan Project
+1. Jalankan server
+Gunakan perintah berikut untuk menjalankan server development:
+```
+uvicorn src.main:app --reload
+```
+
+2. Cek endpoint API
+Buka browser atau gunakan aplikasi seperti Postman untuk memeriksa endpoint API pada ```http://127.0.0.1:8000/docs``` untuk dokumentasi interaktif.
 
 
 # For NIX Users

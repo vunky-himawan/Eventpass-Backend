@@ -29,9 +29,16 @@ class FeedbackRatingModel(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    participant: Mapped["ParticipantModel"] = relationship(
-        "ParticipantModel", back_populates="feedback_ratings"
-    )
-    event: Mapped["EventModel"] = relationship(
-        "EventModel", back_populates="feedback_ratings"
-    )
+    participant: Mapped["ParticipantModel"] = relationship('ParticipantModel', uselist=False, back_populates="feedback_ratings")
+    event: Mapped["EventModel"] = relationship('EventModel', uselist=False, back_populates="feedback_ratings")
+
+    def to_dict(self):
+        return {
+            "feedback_rating_id": self.feedback_rating_id,
+            "participant_id": self.participant_id,
+            "event_id": self.event_id,
+            "rating_value": self.rating_value,
+            "rating_feedback": self.rating_feedback,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }
