@@ -6,6 +6,7 @@ from infrastructure.services.face_recognition_service import FaceRecognitionServ
 from infrastructure.services.image_service import ImageService
 from domain.repositories.ticket.ticket_repository import TicketRepository
 from domain.repositories.face_recognition.face_recognition_repository import FaceRecognitionRepository
+from domain.repositories.organization_member.organization_member_repository import OrganizationMemberRepository
 import numpy as np
 
 class AttendanceUseCase:
@@ -14,18 +15,22 @@ class AttendanceUseCase:
                  event_repository: EventRepositoryImplementation,
                  face_recognition_service: FaceRecognitionService,
                  face_recognition_repository: FaceRecognitionRepository,
+                 organization_member_repository: OrganizationMemberRepository,
                  ticket_repository: TicketRepository,
                  image_service: ImageService):
         self.user_repository = user_repository
         self.event_repository = event_repository
         self.face_recognition_service = face_recognition_service
+        self.organization_member_repository = organization_member_repository
         self.ticket_repository = ticket_repository
         self.face_recognition_repository = face_recognition_repository
         self.image_service = image_service
 
     async def call(self, params: AttendanceParams) -> Result[dict]:
         try:
-            event = await self.event_repository.get_event_with_on_going_status_with_receptionist_id(receptionist_id=params.receptionist_id);
+            organization_member = await self.organization_member_repository.get_organization_member_by_user_id(user_id=params.receptionist_id)
+
+            event = await self.event_repository.get_event_with_on_going_status_with_receptionist_id(receptionist_id=organization_member["organization_member_id"]);
         
             tickets = await self.ticket_repository.get_tickets_by_event_id(event_id=event["event_id"])
 
@@ -66,6 +71,8 @@ class AttendanceUseCase:
             target_embedding = np.squeeze(np.array(face_embedding.get("data")))
 
             result = await self.face_recognition_service.predict(target_embedding=target_embedding, val_embeddings=val_data)
+
+            print(result)
 
             response = {
                 "event_id": event["event_id"],
