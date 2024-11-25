@@ -1,5 +1,5 @@
+from typing import Generic, Optional, TypeVar, Union, List
 from pydantic import BaseModel
-from typing import Generic, Optional, TypeVar
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -7,7 +7,7 @@ class SuccessResponse(BaseModel, Generic[T]):
     """Schema untuk response sukses"""
     status: str = "success"
     message: str
-    data: Optional[dict] = None
+    data: Optional[Union[dict, List[dict]]] = None
     status_code: int = 200
 
     def to_response(self):

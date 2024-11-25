@@ -1,24 +1,37 @@
-from fastapi import APIRouter
-from interface.http.api.schemas.result.success_response import SuccessResponse
-from interface.http.api.schemas.result.error_response import ErrorResponse
-from src.interface.http.api.requests.attendance.attendance_request import AttendanceRequest, FaceAttendanceConfirmationRequest, PinAttendanceConfirmationRequest
-from domain.params.attendance.main import AttendanceParams
-from fastapi import Depends
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession 
 from infrastructure.config.database import get_db
-from src.domain.usecases.attendance.attendance_usecase import AttendanceUseCase
-from infrastructure.repositories.user.user_repository_implementation import UserRepositoryImplementation
+
+# Services
 from infrastructure.services.face_recognition_service import FaceRecognitionService
 from infrastructure.services.image_service import ImageService
+
+# Request
+from src.interface.http.api.requests.attendance.attendance_request import AttendanceRequest, FaceAttendanceConfirmationRequest, PinAttendanceConfirmationRequest
+
+# Response
+from interface.http.api.schemas.result.success_response import SuccessResponse
+from interface.http.api.schemas.result.error_response import ErrorResponse
+
+# Repository Implementation
 from infrastructure.repositories.event.main import EventRepositoryImplementation
 from infrastructure.repositories.ticket.ticket_repository_implementation import TicketRepositoryImplementation
 from infrastructure.repositories.face_recognition.face_recognition_repository_implementation import FaceRecognitionRepositoryImplementation
 from infrastructure.repositories.participant.participant_repository_implementation import ParticipantRepositoryImplementation
-from domain.params.attendance.main import FaceAttendanceConfirmationParams, PinAttendanceConfirmationParams
-from src.domain.usecases.face_attendance_confirmation.face_attendance_confirmation_usecase import FaceAttendanceConfirmationUseCase
-from src.domain.usecases.pin_attendance_confirmation.pin_attendance_confirmation_usecase import PinAttendanceConfirmationUseCase
 from infrastructure.repositories.attendance.attendance_repository_implementation import AttendanceRepositoryImplementation
 from infrastructure.repositories.transaction.transaction_repository_implementation import TransactionRepositoryImplementation
+from infrastructure.repositories.user.user_repository_implementation import UserRepositoryImplementation
+
+# Use Case
+from src.domain.usecases.attendance.attendance_usecase import AttendanceUseCase
+from domain.usecases.attendance_history.attendance_history_usecase import AttendanceHistoryUseCase
+from src.domain.usecases.pin_attendance_confirmation.pin_attendance_confirmation_usecase import PinAttendanceConfirmationUseCase
+from src.domain.usecases.face_attendance_confirmation.face_attendance_confirmation_usecase import FaceAttendanceConfirmationUseCase
+
+# Params
+from domain.params.attendance.main import FaceAttendanceConfirmationParams, PinAttendanceConfirmationParams
+from domain.params.attendance.main import AttendanceParams
+
 
 router = APIRouter()
 
@@ -159,3 +172,40 @@ async def pin_attendance_confirmation(
         return ErrorResponse(message="Prediction failed", data=str(e))
     except Exception as e:
         return ErrorResponse(message="Prediction failed", data=str(e))
+    
+
+def get_attendance_repository(
+    db: AsyncSession = Depends(get_db)
+) -> AttendanceHistoryUseCase:
+    attendance_repository = AttendanceRepositoryImplementation(db)
+    
+    return AttendanceHistoryUseCase(
+        attendance_repository=attendance_repository
+    )
+
+@router.get("/history/{receptionist_id}",
+            responses={
+                200: {"model": SuccessResponse},
+                400: {"model": ErrorResponse},
+                500: {"model": ErrorResponse}
+            },
+)
+async def get_attendance_history(
+    receptionist_id: str,
+    attendance_history_usecase: AttendanceHistoryUseCase = Depends(get_attendance_repository)
+):
+    try:
+        results = await attendance_history_usecase.call(receptionist_id)
+
+        print("RESULTS: ", results.result_value())
+
+        if results.is_success():
+            return SuccessResponse(message="History retrieved successfully", data=results.result_value())
+        else:
+            return ErrorResponse(message="History not retrieved", detail=results.error_message())
+
+    except ValueError as e:
+        print(e)
+        return ErrorResponse(message="Get history failed", data=str(e))
+    except Exception as e:
+        return ErrorResponse(message="Get history failed", data=str(e))
