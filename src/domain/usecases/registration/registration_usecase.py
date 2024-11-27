@@ -36,11 +36,13 @@ class RegistrationUseCase:
             # Create user
             new_user = None
             if params.role == Role.RECEPTIONIST.value:
-                new_user = await self.user_repository.create_user(username=params.username, 
-                                                                password=hashed_password, 
-                                                                email=params.email, 
-                                                                role=params.role, 
-                                                                details=params.details)
+                new_user = await self.user_repository.create_user(
+                    username=params.username, 
+                    password=hashed_password, 
+                    email=params.email, 
+                    role=params.role, 
+                    details=params.details
+                )
 
             elif params.role == Role.PARTICIPANT.value:
                 # Save face photo

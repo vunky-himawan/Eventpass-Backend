@@ -91,14 +91,12 @@ async def register(
             username=registration_request.username,
             password=registration_request.password,
             email=registration_request.email,
-            role=registration_request.role,
+            role=registration_request.role.value,
             face_photo=registration_request.face_photo,
             details=registration_request.details
         )
 
         result = await registration_usecase.call(params)
-
-        print(result.result_value())
 
         if result.is_success():
             return SuccessResponse(message="Pendaftaran berhasil", data=result.result_value().to_dict())

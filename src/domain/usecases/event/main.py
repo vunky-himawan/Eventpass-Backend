@@ -1,14 +1,21 @@
 import uuid
 from domain.entities.result.result import Failed
 from domain.params.event.main import EventCreationParams, UpdateEventParams
+from infrastructure.repositories.event.detail.main import EventDetailRepositoryImplementation
 from infrastructure.repositories.event.main import EventRepositoryImplementation
 from infrastructure.services.image_service import ImageService
 
 
 class EventCreationUseCase:
-    def __init__(self, image_service: ImageService, event_repository: EventRepositoryImplementation):
+    def __init__(
+            self, 
+            image_service: ImageService, 
+            event_repository: EventRepositoryImplementation,
+            event_detail_repository: EventDetailRepositoryImplementation
+    ):
         self.image_service = image_service
         self.event_repository = event_repository
+        self.event_detail_repository = event_detail_repository
 
     async def call(self, params: EventCreationParams):
         try:
@@ -33,14 +40,29 @@ class EventCreationUseCase:
                 event_organizer_id=params.event_organizer_id
             )
 
-            return {"message": "Event created successfully", "event": new_event.as_dict()}
+            if (new_event is not None):
+                # Save event details to repository
+                new_event_detail = await self.event_detail_repository.create_event_detail(
+                    event_id=new_event.event_id,
+                    event_receiptionist_id=params.event_receiptionist_id,
+                    speaker_id=params.speaker_id
+                )
+
+                return {"message": "Event created successfully", "event": new_event.as_dict()}
+            
+            return {"message": "Something went wrong with the details", "error": {"event": new_event.as_dict()}}
         except Exception as e:
             return {"message": f"Error creating event: {str(e)}", "error": str(e)}
 
 class EventUpdateUseCase:
-    def __init__(self, image_service: ImageService, event_repository):
+    def __init__(
+            self, 
+            image_service: ImageService, event_repository,
+            event_detail_repository: EventDetailRepositoryImplementation
+        ):
         self.image_service = image_service
         self.event_repository = event_repository
+        self.event_detail_repository = event_detail_repository
 
     async def call(self, event_id: uuid.UUID, params: UpdateEventParams):
         try:
@@ -81,9 +103,19 @@ class EventUpdateUseCase:
                     event_id=event_id,
                     **update_data
                 )
+
+                # Update event details
+                event_detail = await self.event_detail_repository.update_event_detail(
+                        event_detail_id=new_event.event_details[0].event_detail_id,
+                        event_id=event_id,
+                        event_receiptionist_id=params.event_receiptionist_id,
+                        speaker_id=params.speaker_id
+                        )
+
+                if (event_detail is not None):
+                    return {"message": "Event updated successfully", "event": new_event.as_dict()}
     
-                print(new_event)
-                return {"message": "Event updated successfully", "event": new_event.as_dict()}
+                return {"message": "Something went wrong with the details", "error": {"event": new_event.as_dict()}}
 
             else:
                 return {"message": "No changes detected"}
@@ -111,3 +143,20 @@ class EventDeleteUseCase:
         except Exception as e:
             return {"message": f"Error deleting event: {str(e)}", "error": str(e)}
 
+
+class EventGetUseCase:
+    def __init__(
+            self, 
+            event_repository: EventRepositoryImplementation
+    ):
+        self.event_repository = event_repository
+
+    async def call(self):
+        try:
+            events = await self.event_repository.get_all()
+            serialized_events = [event.as_dict_with_detail() for event in events]
+
+            return {"message": "Events retrieved successfully", "events": serialized_events}
+        except Exception as e:
+            print(f"Error retrieving events: {str(e)}")
+            return {"message": f"Error retrieving events: {str(e)}", "error": str(e)}

@@ -1,35 +1,43 @@
+import os
 import uuid
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, responses
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.params.event.main import EventCreationParams, UpdateEventParams
-from domain.usecases.event.main import EventCreationUseCase, EventDeleteUseCase, EventUpdateUseCase
+from domain.usecases.event.main import EventCreationUseCase, EventDeleteUseCase, EventGetUseCase, EventUpdateUseCase
 from infrastructure.config.database import get_db
+from infrastructure.repositories.event.detail.main import EventDetailRepositoryImplementation
 from infrastructure.repositories.event.main import EventRepositoryImplementation
 from infrastructure.services.image_service import ImageService
 from interface.http.api.requests.event.main import EventCreationRequest, UpdateEventRequest
-from interface.http.api.schemas.event.main import EventSchema
+from interface.http.api.schemas.event.main import EventSchema, EventWithDetailSchema
 from interface.http.api.schemas.result.error_response import ErrorResponse
 from interface.http.api.schemas.result.success_response import SuccessResponse
 
 router = APIRouter()
 
+static_dir = os.getenv("STATIC_DIR", "dist")
+
 def get_event_creation_usecase(db: AsyncSession = Depends(get_db)) -> EventCreationUseCase:
-    image_service = ImageService(storage_directory='uploads/event')
+    image_service = ImageService(storage_directory=os.path.join(static_dir, "uploads/event"))
     event_repository = EventRepositoryImplementation(db)
+    event_detail_repository = EventDetailRepositoryImplementation(db)
     
     return EventCreationUseCase(
         image_service=image_service,
-        event_repository=event_repository
+        event_repository=event_repository,
+        event_detail_repository=event_detail_repository
     )
 
 def get_event_update_usecase(db: AsyncSession = Depends(get_db)) -> EventUpdateUseCase:
-    image_service = ImageService(storage_directory='uploads/event')
+    image_service = ImageService(storage_directory=os.path.join(static_dir, "uploads/event"))
     event_repository = EventRepositoryImplementation(db)
-    
+    event_detail_repository = EventDetailRepositoryImplementation(db)
+
     return EventUpdateUseCase(
         image_service=image_service,
-        event_repository=event_repository
+        event_repository=event_repository,
+        event_detail_repository=event_detail_repository
     )
 
 def get_event_delete_usecase(db: AsyncSession = Depends(get_db)) -> EventDeleteUseCase:
@@ -37,6 +45,39 @@ def get_event_delete_usecase(db: AsyncSession = Depends(get_db)) -> EventDeleteU
     
     return EventDeleteUseCase(
         event_repository=event_repository
+    )
+
+def get_event_get_usecase(db: AsyncSession = Depends(get_db)) -> EventGetUseCase:
+    event_repository = EventRepositoryImplementation(db)
+
+    return EventGetUseCase(
+            event_repository=event_repository
+    )
+
+@router.get(
+        "/",
+        response_model=SuccessResponse[EventWithDetailSchema],
+        responses={
+            200: {"model": SuccessResponse[EventWithDetailSchema]},
+            400: {"model": ErrorResponse},
+            500: {"model": ErrorResponse}
+        }
+    )
+async def get_events(
+        event_get_use_case: EventGetUseCase = Depends(get_event_get_usecase)
+):
+    result = await event_get_use_case.call()
+
+    print(f"Result: {result}")
+
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+
+    return SuccessResponse(
+        status="success",
+        message="Events retrieved successfully",
+        data=result["events"],
+        status_code=200
     )
 
 @router.post(
@@ -62,7 +103,9 @@ async def create_event(
         ticket_price=request.ticket_price,
         ticket_quantity=request.ticket_quantity,
         start_date=request.start_date,
-        event_organizer_id=request.event_organizer_id
+        event_organizer_id=request.event_organizer_id,
+        speaker_id=request.speaker_id,
+        event_receiptionist_id=request.event_receiptionist_id
     )
 
     result = await event_creation_use_case.call(params)
@@ -102,7 +145,9 @@ async def update_event(
         ticket_quantity=request.ticket_quantity,
         start_date=request.start_date,
         event_organizer_id=request.event_organizer_id,
-        thumbnail=request.thumbnail
+        thumbnail=request.thumbnail,
+        speaker_id=request.speaker_id,
+        event_receiptionist_id=request.event_receiptionist_id
     )
 
     try:

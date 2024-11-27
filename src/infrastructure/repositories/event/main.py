@@ -1,14 +1,36 @@
 import uuid
-from domain.params.event.main import EventCreationParams
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from infrastructure.database.models.event import  EventModel
+from infrastructure.database.models.event_detail import EventDetailModel
+from infrastructure.database.models.event_employee import EventEmployeeModel
 
 class EventRepositoryImplementation:
-    def __init__(self, db):
+    def __init__(self, db: AsyncSession):
         self.db = db
+
+    async def get_all(self):
+        try:
+            events = await self.db.execute(
+                    select(EventModel)
+                    .order_by(EventModel.created_at.desc())
+                    .options(
+                        selectinload(EventModel.event_details)
+                            .selectinload(EventDetailModel.employee)
+                    )
+            )
+            return events.scalars().all()
+        except Exception as e:
+            print(f"Error fetching events: {e}")
+            raise e
 
     async def get_event(self, event_id:str | uuid.UUID):
         try:
-            events = await self.db.get(EventModel, event_id)
+            events = await self.db.execute(
+                    select(EventModel).where(EventModel.c.event_id == event_id)
+            )
             return events
         except Exception as e:
             print(f"Error fetching events: {e}")

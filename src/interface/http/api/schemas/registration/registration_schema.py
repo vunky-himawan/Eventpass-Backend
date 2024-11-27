@@ -1,4 +1,6 @@
 from pydantic import BaseModel, ValidationError
+from infrastructure.database.models.user import RoleEnum
+from interface.http.api.schemas.event_organizer.receptionis.main import Receptionist
 from interface.http.api.schemas.participant.participant_schema import Participant
 from interface.http.api.schemas.event_organizer.event_organizer_schema import EventOrganizer
 from fastapi import Body, HTTPException
@@ -12,16 +14,16 @@ class RegistrationRequest(BaseModel):
     username: str
     password: str
     email: str
-    role: str
+    role: RoleEnum
     face_photo: Optional[UploadFile] = None
-    details: Optional[Union[Participant, EventOrganizer]] = Body(None)
+    details: Optional[Union[Participant, EventOrganizer, Receptionist]] = Body(None)
 
     @classmethod
     async def as_form(cls,
         username: str = Form(...),
         password: str = Form(...),
         email: str = Form(...),
-        role: str = Form(...),
+        role: RoleEnum = Form(...),
         face_photo: Optional[UploadFile] = File(None),
         details: Optional[str] = Form(None)
     ): 
@@ -45,6 +47,8 @@ class RegistrationRequest(BaseModel):
                     parsed_details = Participant(**details_dict)
                 elif role == "EVENT_ORGANIZER":
                     parsed_details = EventOrganizer(**details_dict)
+                if role == "RECEPTIONIST":
+                    parsed_details = Receptionist(**details_dict)
             # except json.JSONDecodeError as e:
             #     raise ValueError(f"Invalid JSON format in 'details'. Please check your input. Error: {str(e)}")
             except ValidationError as e:

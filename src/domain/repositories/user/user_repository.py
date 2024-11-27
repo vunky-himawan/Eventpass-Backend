@@ -6,9 +6,11 @@ from domain.entities.participant.participant import Participant
 from domain.entities.event_organizer.event_organizer import EventOrganizer
 from typing import List
 
+from interface.http.api.schemas.event_organizer.receptionis.main import Receptionist
+
 class UserRepository(ABC):
     @abstractmethod
-    async def create_user(self, username: str, email: str, password: str, role: Role, face_photo_paths: List[str] | None = None, details: Participant | EventOrganizer | None = None) -> Result[User]:
+    async def create_user(self, username: str, email: str, password: str, role: Role, face_photo_paths: List[str] | None = None, details: Participant | EventOrganizer | Receptionist | None = None) -> Result[User]:
         pass
 
     @abstractmethod

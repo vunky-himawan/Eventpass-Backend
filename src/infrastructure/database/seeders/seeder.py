@@ -1,9 +1,11 @@
 import uuid
 from faker import Faker
 from random import choice
-from src.infrastructure.config.database import init_engine
-from src.infrastructure.services.password_service import PasswordService
-from src.infrastructure.database.models.user import add_row
+
+from sqlalchemy.orm import Session
+from infrastructure.config.database import init_engine
+from infrastructure.services.password_service import PasswordService
+from infrastructure.database.models.user import UserModel, add_row
 import os
 
 class DataSeeder:
@@ -25,6 +27,8 @@ class DataSeeder:
                 "https://www.shutterstock.com/image-vector/people-icon-vector-person-sing-260nw-678922465.jpg"
             )
 
-# def delete_users():
-#     session.query(UserModel).delete()
-#     session.commit()
+    def remove_users(self):
+        with Session(self.engine) as session:
+            session.query(UserModel).delete()
+            session.commit()
+            session.close()

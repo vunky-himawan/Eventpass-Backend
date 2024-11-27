@@ -8,7 +8,7 @@ class EventDetailCreationParams:
             self,
             event_id: uuid.UUID,
             event_receiptionist_id: uuid.UUID,
-            speaker_id: uuid.UUID,
+            speaker_id: Optional[uuid.UUID]
         ):
         self.event_id = event_id
         self.event_receiptionist_id = event_receiptionist_id
