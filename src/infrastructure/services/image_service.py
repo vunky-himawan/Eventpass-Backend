@@ -19,14 +19,18 @@ class ImageService:
             image_data = Image.open(image.file)  # Membuka file gambar
             filepath = None
             if subdir:
-                os.makedirs(os.path.join(self.storage_directory, subdir), exist_ok=True)
-            # Menyimpan gambar dengan kualitas tertentu
+                subdir_path = os.path.join(self.storage_directory, subdir.replace(" ", "_"))
+                os.makedirs(subdir_path, exist_ok=True)
+                os.chmod(subdir_path, 0o755)
+
             if not subdir:
                 filepath = os.path.join(self.storage_directory, filename)
             else:
                 filepath = os.path.join(self.storage_directory, subdir.replace(" ", "_"), filename)
 
             image_data.save(filepath, format=image_data.format, quality=85, optimize=True)
+            os.chmod(filepath, 0o644)
+
             return filepath  # Kembalikan path ke gambar yang disimpan
         except Exception as e:
             # Tangani kesalahan jika ada

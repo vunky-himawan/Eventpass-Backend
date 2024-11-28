@@ -3,6 +3,7 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
 from domain.repositories.user.user_repository import UserRepository
 from domain.entities.user.user import User
+from infrastructure.database.models.organization_member import OrganizationMemberModel
 from infrastructure.database.models.user import UserModel
 from domain.entities.result.result import Failed, Success, Result
 from domain.entities.participant.participant import Participant
@@ -12,13 +13,23 @@ from infrastructure.database.models.participant import ParticipantModel
 from infrastructure.database.models.face_photos import FacePhotoModel
 from infrastructure.database.models.event_organizer import EventOrganizerModel
 from datetime import datetime
-from typing import List
+
+from interface.http.api.schemas.event_organizer.receptionis.main import Receptionist
 
 class UserRepositoryImplementation(UserRepository):
     def __init__(self, db: AsyncSession):
         self._db_session = db
 
-    async def create_user(self, username: str, email: str, password: str, role: str, feature_vector: bytes | None = None, picture_path: str | None = None, details: Participant | EventOrganizer | None = None) -> Result[User]:
+    async def create_user(
+            self, 
+            username: str, 
+            email: str, 
+            password: str, 
+            role: Role, 
+            feature_vector: bytes | None = None, 
+            picture_path: str | None = None,
+            details: Participant | EventOrganizer | Receptionist  | None = None
+        ) -> Result[User]:
         try:
             if not all([username, email, password, role]):
                 raise ValueError("Email, username, password, dan role harus diisi")
@@ -38,9 +49,26 @@ class UserRepositoryImplementation(UserRepository):
             self._db_session.add(new_user_model)
             await self._db_session.flush()
 
+            if (role == Role.RECEPTIONIST.value) and (details is not None):
+                details = OrganizationMemberModel(details.__dict__)
+                try:
+                    new_receptionist = OrganizationMemberModel(
+                        event_organizer_id=details.event_organizer_id,
+                        user_id=new_user_model.user_id,
+                    )
+
+                    self._db_session.add(new_receptionist)
+                    await self._db_session.flush()
+                except ValueError as e:
+                    print("ERROR DI CREATE USER REPOSITORY IMPLEMENTATION: ", e)
+                    await self._db_session.rollback()
+                    return Failed(message="Terjadi kesalahan")
+
             if role == Role.PARTICIPANT.value:
                 if details is None:
                     return Failed(message="Participant details are required")
+
+                details = ParticipantModel(details.__dict__)
 
                 try:
                     new_participant = ParticipantModel(
@@ -75,6 +103,8 @@ class UserRepositoryImplementation(UserRepository):
                     return Failed(message="Terjadi kesalahan")
 
             elif role == Role.EVENT_ORGANIZER.value:
+                details = EventOrganizerModel(details.__dict__)
+
                 try:
                     new_event_organizer = EventOrganizerModel(
                         user_id=new_user_model.user_id,

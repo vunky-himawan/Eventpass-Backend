@@ -1,4 +1,5 @@
 
+from typing import Optional
 import uuid
 from infrastructure.database.models.event_detail import EventDetailModel
 from sqlalchemy.future import select
@@ -26,9 +27,9 @@ class EventDetailRepositoryImplementation:
 
     async def create_event_detail(
             self,
-            event_id: uuid.UUID,
+            event_id: uuid.UUID | str,
             event_receiptionist_id: uuid.UUID,
-            speaker_id: uuid.UUID
+            speaker_id: Optional[uuid.UUID] = None
         ) -> EventDetailModel:
         try:
             event_detail = EventDetailModel(

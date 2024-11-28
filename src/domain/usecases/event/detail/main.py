@@ -21,11 +21,17 @@ class EventDetailCreationUseCase:
             if not eventExist:
                 raise Exception("Event not found")
 
-            event_detail = await self.event_detail_repository.create_event_detail(
-                event_id=event_id,
-                event_receiptionist_id=params.event_receiptionist_id,
-                speaker_id=params.speaker_id
-            )
+            if params.speaker_id is None:
+                event_detail = await self.event_detail_repository.create_event_detail(
+                    event_id=event_id,
+                    event_receiptionist_id=params.event_receiptionist_id,
+                )
+            else:
+                event_detail = await self.event_detail_repository.create_event_detail(
+                    event_id=event_id,
+                    event_receiptionist_id=params.event_receiptionist_id,
+                    speaker_id=params.speaker_id
+                )
 
             return {"message": "Event created successfully", "event": event_detail.as_dict()}
         except Exception as e:

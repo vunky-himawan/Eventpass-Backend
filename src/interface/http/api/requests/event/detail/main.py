@@ -2,19 +2,26 @@
 from typing import Optional
 import uuid
 from fastapi import Form
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 
 
 class EventDetailRequest(BaseModel):
     event_id: uuid.UUID
-    speaker_id: uuid.UUID
+    speaker_id: Optional[uuid.UUID]
     event_receiptionist_id: uuid.UUID
+
+    @model_validator(mode="before")
+    def handle_empty_strings(cls, values):
+        # Convert empty strings to None for speaker_id
+        if values.get("speaker_id") == "":
+            values["speaker_id"] = None
+        return values
 
     @classmethod
     async def as_form(
         cls,
         event_id: uuid.UUID = Form(...),
-        speaker_id: uuid.UUID = Form(...),
+        speaker_id: Optional[str] = Form(None),
         event_receiptionist_id: uuid.UUID = Form(...),
     ):
         return cls(

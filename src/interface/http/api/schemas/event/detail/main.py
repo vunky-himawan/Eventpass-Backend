@@ -6,5 +6,5 @@ class EventDetailSchema(BaseModel):
     event_id: uuid.UUID
     event: dict
     event_receiptionist: dict
-    speaker: dict
+    speaker: str
     employee: dict

@@ -92,7 +92,7 @@ async def register(
             username=registration_request.username,
             password=registration_request.password,
             email=registration_request.email,
-            role=registration_request.role,
+            role=registration_request.role.value,
             face_photo=registration_request.face_photo,
             details=registration_request.details
         )

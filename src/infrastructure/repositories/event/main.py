@@ -9,9 +9,22 @@ class EventRepositoryImplementation(EventRepository):
     def __init__(self, db: AsyncSession):
         self.db = db
 
+    async def get_all(self):
+        try:
+            events = await self.db.execute(
+                    select(EventModel)
+                    .order_by(EventModel.created_at.desc())
+            )
+            return events.scalars().all()
+        except Exception as e:
+            print(f"Error fetching events: {e}")
+            raise e
+
     async def get_event(self, event_id:str | uuid.UUID):
         try:
-            events = await self.db.get(EventModel, event_id)
+            events = await self.db.execute(
+                    select(EventModel).where(EventModel.c.event_id == event_id)
+            )
             return events
         except Exception as e:
             print(f"Error fetching events: {e}")
