@@ -3,9 +3,11 @@ from fastapi.staticfiles import StaticFiles
 import os
 import sys
 import importlib.util
+from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-
 from utils.symlink import create_symlinks
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 load_dotenv()
 
@@ -26,7 +28,16 @@ create_uploads_folder()
 create_symlinks(os.getenv("UPLOADS_DIR", "uploads"), os.getenv("STATIC_DIR", "dist"), "static", os.getenv("UPLOADS_DIR", "uploads"))
 
 app = FastAPI(title="Eventpass API", version="1.0.0")
+
 app.mount("/static", StaticFiles(directory=os.getenv("STATIC_DIR", "dist"),follow_symlink=True), name="static")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 api_version = "v1"
 routes_directory = os.path.join(os.path.dirname(__file__), "interface", "http", "api", "routes")
 
@@ -50,4 +61,3 @@ def load_routes(directory: str, app: FastAPI, api_version: str):
                     app.include_router(module.router, prefix=prefix, tags=[last_folder.capitalize().replace("_", " ")])
 
 load_routes(routes_directory, app, api_version)
-

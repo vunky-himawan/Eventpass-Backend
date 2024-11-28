@@ -1,22 +1,21 @@
 import re
 from sqlalchemy import String, Text, Integer, ForeignKey, Enum as SQLAlchemyEnum, DateTime
-
-from infrastructure.database.models.event_detail import EventDetailModel
-from infrastructure.database.models.event_employee import EventEmployeeModel
 from ...config.database import Base
 import uuid
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
+from typing import List
 
 class EventStatusEnum(enum.Enum):
     BUKA = "BUKA"
     TUTUP = "TUTUP"
+    BERLANGSUNG = "BERLANGSUNG"
     SELESAI = "SELESAI"
 
 class EventTypeEnum(enum.Enum):
     SEMINAR = "SEMINAR"
-    KONVERENSI = "KONFERENSI"
+    KONVERENSI = "KONVERENSI"
     WORKSHOP = "WORKSHOP"
     FESTIVAL = "FESTIVAL"
     LAINNYA = "LAINNYA"
@@ -50,28 +49,13 @@ class EventModel(Base):
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    # organizer: Mapped["EventOrganizerModel"] = relationship("EventOrganizerModel", back_populates="events")
-    # employee: Mapped["EventEmployeeModel"] = relationship("EventEmployeeModel", back_populates="event")
-    
-    organizer: Mapped["EventOrganizerModel"] = relationship(
-            "EventOrganizerModel", 
-            back_populates="events",
-            lazy="selectin",
-    )
-    event_details: Mapped["EventDetailModel"] = relationship(
-            "EventDetailModel", 
-            back_populates="event", 
-            cascade="all, delete-orphan",
-            lazy="selectin",
-    )
-    employees: Mapped["EventEmployeeModel"] = relationship(
-            "EventEmployeeModel",
-            back_populates="event",
-            lazy="selectin",
-    )
-    # organization_members: Mapped["OrganizationMemberModel"] = relationship("OrganizationMemberModel", back_populates="event")
+    tickets: Mapped[List["TicketModel"]] = relationship('TicketModel', uselist=True, back_populates="event")
+    feedback_ratings: Mapped[List["FeedbackRatingModel"]] = relationship('FeedbackRatingModel', uselist=True, back_populates="event")
+    event_organizer: Mapped["EventOrganizerModel"] = relationship('EventOrganizerModel', uselist=False, back_populates="events")
+    attendances: Mapped[List["AttendanceModel"]] = relationship('AttendanceModel', uselist=True, back_populates="event")
+    event_speakers: Mapped[List["EventSpeakerModel"]] = relationship('EventSpeakerModel', uselist=True, back_populates="event")
 
-    def as_dict(self):
+    def to_dict(self):
         return {
             "event_id": self.event_id,
             "event_organizer_id": self.event_organizer_id,
@@ -84,20 +68,8 @@ class EventModel(Base):
             "ticket_price": self.ticket_price,
             "ticket_quantity": self.ticket_quantity,
             "start_date": self.start_date,
-        }
-    
-    def as_dict_with_detail(self):
-        return {
-                "event_id": self.event_id,
-                "event_organizer_id": self.event_organizer_id,
-                "thumbnail_path": self.thumbnail_path,
-                "title": self.title,
-                "address": self.address,
-                "description": self.description,
-                "type": self.type.name,
-                "status": self.status.name,
-                "ticket_price": self.ticket_price,
-                "ticket_quantity": self.ticket_quantity,
-                "start_date": self.start_date,
-                "details": self.event_details.as_dict() if self.event_details else None
+            "receptionist_1": self.receptionist_1,
+            "receptionist_2": self.receptionist_2,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
         }

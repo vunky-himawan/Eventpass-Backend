@@ -26,9 +26,15 @@ class TicketModel(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    event: Mapped["EventModel"] = relationship(
-        "EventModel", back_populates="tickets"
-    )
-    transaction: Mapped["TransactionModel"] = relationship(
-        "TransactionModel", back_populates="tickets"
-    )
+    event: Mapped["EventModel"] = relationship('EventModel', uselist=False, back_populates="tickets")
+    transaction: Mapped["TransactionModel"] = relationship('TransactionModel', uselist=False, back_populates="ticket", lazy="joined")
+
+    def to_dict(self):
+        return {
+            "ticket_id": self.ticket_id,
+            "event_id": self.event_id,
+            "transaction_id": self.transaction_id,
+            "pin": self.pin,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }

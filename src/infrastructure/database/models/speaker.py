@@ -1,6 +1,6 @@
 from sqlalchemy import String, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
+from typing import List
 from ...config.database import Base
 import uuid
 from sqlalchemy.sql import func
@@ -26,3 +26,15 @@ class SpeakerModel(Base):
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+    event_speakers: Mapped[List["EventSpeakerModel"]] = relationship('EventSpeakerModel', uselist=True, back_populates="speaker")
+
+    def to_dict(self):
+        return {
+            "speaker_id": self.speaker_id,
+            "name": self.name,
+            "title": self.title,
+            "social_media_links": self.social_media_links,
+            "company": self.company,
+            "created_at": self.created_at
+        }

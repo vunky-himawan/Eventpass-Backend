@@ -33,8 +33,6 @@ class LoginUseCase:
 
                     details = await self.user_repository.get_user_details(user=user)
 
-                    print(f"Details, ", details)
-
                     access_token = self.jwt_service.create_access_token(user=user, details=details.result_value())
                     refresh_token = self.jwt_service.create_refresh_token(user=user, details=details.result_value())
 

@@ -2,6 +2,7 @@ from sqlalchemy import Column, String, ForeignKey
 from ...config.database import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import uuid
+from typing import List
 
 class OrganizationMemberModel(Base):
     __tablename__ = "organization_members"
@@ -16,14 +17,13 @@ class OrganizationMemberModel(Base):
         String(36), ForeignKey("event_organizers.event_organizer_id"), nullable=False
     )
 
-    event_organizer: Mapped["EventOrganizerModel"] = relationship(
-        "EventOrganizerModel", back_populates="organization_members"
-    )
+    users: Mapped[List["UserModel"]] = relationship('UserModel', uselist=True, back_populates="organization_member")
+    event_organizer: Mapped["EventOrganizerModel"] = relationship('EventOrganizerModel', uselist=False, back_populates="organization_member")
+    attendances: Mapped[List["AttendanceModel"]] = relationship('AttendanceModel', uselist=True, back_populates="organization_member")
 
-    user: Mapped["UserModel"] = relationship("UserModel", back_populates="organization_members")
-
-    # employee: Mapped["EventEmployeeModel"] = relationship("EventEmployeeModel", back_populates="organization_member")
-    
-    # Ensure proper back_populates in EventModel
-    # event: Mapped["EventModel"] = relationship("EventModel", back_populates="organization_members")
-
+    def to_dict(self):
+        return {
+            "organization_member_id": self.organization_member_id,
+            "user_id": self.user_id,
+            "event_organizer_id": self.event_organizer_id
+        }

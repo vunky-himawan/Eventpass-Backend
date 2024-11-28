@@ -2,6 +2,7 @@
 from typing import Optional
 import uuid
 from infrastructure.database.models.event_detail import EventDetailModel
+from sqlalchemy.future import select
 
 
 class EventDetailRepositoryImplementation:

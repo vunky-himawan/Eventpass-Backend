@@ -48,7 +48,8 @@ async def login(request: LoginRequest, login_usecase: LoginUseCase = Depends(get
         if result.is_success():
             return SuccessResponse(message="Login successful", data=result.result_value())
         else:
-            return ErrorResponse(message="Login failed", data=result.error_message())
+            print(result.error_message())
+            return ErrorResponse(message="Login failed", detail=result.error_message())
 
     except ValueError as e:
         return ErrorResponse(message="Login failed", data=str(e))
@@ -64,14 +65,14 @@ def get_registration_usecase(
     user_repository = UserRepositoryImplementation(db)
     authentication_repository = AuthenticationRepositoryImplementation(db)
     image_service = ImageService(storage_directory='uploads/dataset')
-    face_detection_service = FaceRecognitionService()
+    face_recognition_service = FaceRecognitionService()
     
     return RegistrationUseCase(
         password_service=password_service,
         user_repository=user_repository,
         authentication_repository=authentication_repository,
         image_service=image_service,
-        face_detection_service=face_detection_service
+        face_recignition_service=face_recognition_service
     )
 
 @router.post(
@@ -101,12 +102,13 @@ async def register(
         if result.is_success():
             return SuccessResponse(message="Pendaftaran berhasil", data=result.result_value().to_dict())
         else:
+            print(result.error_message())
             return ErrorResponse(message="Gagal dalam proses pendaftaran", detail=result.error_message())
         
     except ValueError as e:
-        print("ValueError: ", e)
+        print("ValueError DI AUTH ROUTES: ", e)
         return ErrorResponse(message="Gagal dalam proses pendaftaran", detail="Terjadi kesalahan")
     except Exception as e:
-        print("Exception: ", e)
+        print("Exception DI AUTH ROUTES: ", e)
         return ErrorResponse(message="Gagal dalam proses pendaftaran", detail="Terjadi kesalahan")
     

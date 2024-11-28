@@ -18,18 +18,27 @@ class AttendanceModel(Base):
 
     attendance_id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     event_id: Mapped[str] = mapped_column(String(36), ForeignKey("events.event_id"), nullable=False)
-    receptionist_id: Mapped[str] = mapped_column(String(36), ForeignKey("event_employees.event_employee_id"), nullable=False)
+    receptionist_id: Mapped[str] = mapped_column(String(36), ForeignKey("organization_members.organization_member_id"), nullable=False)
     participant_id: Mapped[str] = mapped_column(String(36), ForeignKey("participants.participant_id"), nullable=False)
-    ticket_id: Mapped[str] = mapped_column(String(36), ForeignKey("tickets.ticket_id"), nullable=False)
-    attended_in_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), nullable=True)
-    attended_out_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), nullable=True)
-    pin: Mapped[str] = mapped_column(String(6), nullable=False)
+    attended_in_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), nullable=False)
     attendance_method: Mapped[AttendaceMethodEnum] = mapped_column(SQLAlchemyEnum(AttendaceMethodEnum), nullable=False)
     status: Mapped[AttendanceStatusEnum] = mapped_column(SQLAlchemyEnum(AttendanceStatusEnum), nullable=False)
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    event: Mapped["EventModel"] = relationship("EventModel", back_populates="attendance_tickets")
-    receptionist: Mapped["ReceptionistModel"] = relationship("ReceptionistModel", back_populates="events")
-    participant: Mapped["ParticipantModel"] = relationship("ParticipantModel", back_populates="events")
-    ticket: Mapped["AttendanceTicketModel"] = relationship("AttendanceTicketModel", back_populates="events")
+    participant: Mapped["ParticipantModel"] = relationship('ParticipantModel', uselist=False, back_populates="attendances")
+    event: Mapped["EventModel"] = relationship('EventModel', uselist=False, back_populates="attendances")
+    organization_member: Mapped["OrganizationMemberModel"] = relationship('OrganizationMemberModel', uselist=False, back_populates="attendances")
+
+    def to_dict(self):
+        return {
+            "attendance_id": self.attendance_id,
+            "event_id": self.event_id,
+            "receptionist_id": self.receptionist_id,
+            "participant_id": self.participant_id,
+            "attended_in_at": self.attended_in_at,
+            "attendance_method": self.attendance_method,
+            "status": self.status,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }

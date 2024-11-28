@@ -1,13 +1,11 @@
 import uuid
-
-from sqlalchemy import select
+from infrastructure.database.models.event import EventModel
+from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-from infrastructure.database.models.event import  EventModel
-from infrastructure.database.models.event_detail import EventDetailModel
-from infrastructure.database.models.event_employee import EventEmployeeModel
+from sqlalchemy import and_, or_
+from domain.repositories.event.main import EventRepository
 
-class EventRepositoryImplementation:
+class EventRepositoryImplementation(EventRepository):
     def __init__(self, db: AsyncSession):
         self.db = db
 
@@ -16,10 +14,6 @@ class EventRepositoryImplementation:
             events = await self.db.execute(
                     select(EventModel)
                     .order_by(EventModel.created_at.desc())
-                    .options(
-                        selectinload(EventModel.event_details)
-                            .selectinload(EventDetailModel.employee)
-                    )
             )
             return events.scalars().all()
         except Exception as e:
@@ -110,3 +104,18 @@ class EventRepositoryImplementation:
             print(f"Error deleting event: {e}")
             raise e
 
+    async def get_event_with_on_going_status_with_receptionist_id(self, receptionist_id: str) -> list[dict]:
+        try:
+            query = select(EventModel).where(
+                and_(
+                    or_(EventModel.receptionist_1 == receptionist_id, EventModel.receptionist_2 == receptionist_id),
+                    EventModel.status == "BERLANGSUNG"
+                )
+            )
+            results = await self.db.execute(query)
+            event = results.scalars().first()
+            
+            return event.to_dict()
+
+        except Exception as e:
+            print(f"Error fetching events: {e}")

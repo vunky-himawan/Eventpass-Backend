@@ -5,7 +5,7 @@ from ...config.database import Base
 import uuid
 
 class EventSpeakerModel(Base):
-    __tablename__ = "event_details"
+    __tablename__ = "event_speakers"
 
     event_speaker_id: Mapped[str] = mapped_column(
         String(36), primary_key=True, default=lambda: str(uuid.uuid4())
@@ -17,13 +17,13 @@ class EventSpeakerModel(Base):
                 String(36), ForeignKey("speakers.speaker_id"), nullable=False
     )
 
-    event: Mapped["EventModel"] = relationship(
-            "EventModel",
-            back_populates="event_speakers",
-            lazy="joined",
-    )
-    speaker: Mapped["SpeakerModel"] = relationship(
-            "SpeakerModel",
-            back_populates="event_speakers",
-            lazy="joined",
-    )
+    event: Mapped["EventModel"] = relationship('EventModel', uselist=False, back_populates="event_speakers")
+    speaker: Mapped["SpeakerModel"] = relationship('SpeakerModel', uselist=False, back_populates="event_speakers")
+
+
+    def to_dict(self):
+        return {
+            "event_speaker_id": self.event_speaker_id,
+            "event_id": self.event_id,
+            "speaker_id": self.speaker_id
+        }

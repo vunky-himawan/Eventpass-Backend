@@ -22,7 +22,6 @@ class JWTTokenService:
             "sub": {
                 "id": str(user.user_id),
                 "username": user.username,
-                "email": user.email,
                 "role": user.role,
             }
         }
@@ -43,7 +42,6 @@ class JWTTokenService:
             "sub": {
                 "id": str(user.user_id),
                 "username": user.username,
-                "email": user.email,
                 "role": user.role,
             }
         }

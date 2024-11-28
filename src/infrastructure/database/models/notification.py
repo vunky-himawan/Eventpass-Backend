@@ -29,6 +29,15 @@ class NotificationModel(Base):
         DateTime(timezone=True), server_default=func.now()
     )
 
-    user: Mapped["UserModel"] = relationship(
-        "UserModel", back_populates="notifications"
-    )
+    user: Mapped["UserModel"] = relationship('UserModel', uselist=False, back_populates="notifications")
+
+    def to_dict(self):
+        return {
+            "notification_id": self.notification_id,
+            "user_id": self.user_id,
+            "type": self.type,
+            "for_model": self.for_model,
+            "data": self.data,
+            "read_at": self.read_at,
+            "created_at": self.created_at
+        }
