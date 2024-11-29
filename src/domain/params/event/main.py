@@ -1,7 +1,9 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 import uuid
 from fastapi import UploadFile
+
+from src.domain.entities.speaker.speaker import Speaker
 
 class EventCreationParams:
     def __init__(
@@ -16,8 +18,10 @@ class EventCreationParams:
             start_date: datetime,
             thumbnail: UploadFile,
             event_organizer_id: str,
-            speaker_id: Optional[uuid.UUID],
-            event_receiptionist_id: uuid.UUID,
+            receptionist_1: uuid.UUID,
+            receptionist_2: Optional[uuid.UUID] = None,
+            
+            speaker: List[Speaker] = [],
     ):
         self.title = title
         self.thumbnail = thumbnail
@@ -29,8 +33,11 @@ class EventCreationParams:
         self.ticket_quantity = ticket_quantity
         self.start_date = start_date
         self.event_organizer_id = event_organizer_id
-        self.speaker_id = speaker_id    
-        self.event_receiptionist_id = event_receiptionist_id
+
+        self.speaker = speaker
+
+        self.receptionist_1 = receptionist_1
+        self.receptionist_2 = receptionist_2
 
 class UpdateEventParams:
     def __init__(
@@ -45,8 +52,11 @@ class UpdateEventParams:
             start_date: Optional[datetime],
             event_organizer_id: Optional[str],
             thumbnail: Optional[UploadFile],
-            speaker_id: Optional[uuid.UUID],
-            event_receiptionist_id: uuid.UUID,
+
+            speaker: Optional[List[Speaker]],
+
+            receptionist_1: Optional[uuid.UUID],
+            receptionist_2: Optional[uuid.UUID] = None,
         ):
         self.title = title
         self.address = address
@@ -58,5 +68,8 @@ class UpdateEventParams:
         self.start_date = start_date
         self.event_organizer_id = event_organizer_id
         self.thumbnail = thumbnail
-        self.speaker_id = speaker_id
-        self.event_receiptionist_id = event_receiptionist_id
+
+        self.speaker = speaker
+
+        self.receptionist_1 = receptionist_1
+        self.receptionist_2 = receptionist_2

@@ -27,3 +27,10 @@ class EventSpeakerModel(Base):
             "event_id": self.event_id,
             "speaker_id": self.speaker_id
         }
+
+    def as_dict(self):
+        return {
+            "event_speaker_id": self.event_speaker_id,
+            "event_id": self.event_id,
+            "speaker_id": self.speaker_id
+        }

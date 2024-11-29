@@ -5,7 +5,7 @@ import sys
 import importlib.util
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from utils.symlink import create_symlinks
+from src.utils.symlink import create_symlinks
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 

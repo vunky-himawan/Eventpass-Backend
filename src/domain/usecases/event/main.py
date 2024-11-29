@@ -1,9 +1,10 @@
 import uuid
 from domain.entities.result.result import Failed
 from domain.params.event.main import EventCreationParams, UpdateEventParams
-from infrastructure.repositories.event.detail.main import EventDetailRepositoryImplementation
 from infrastructure.repositories.event.main import EventRepositoryImplementation
 from infrastructure.services.image_service import ImageService
+from src.infrastructure.repositories.event_speaker.event_speaker_repos import EventSpeakerRepositoryImplementation
+from src.infrastructure.repositories.speaker.speaker_repository import SpeakerRepositoryImplementation
 
 
 class EventCreationUseCase:
@@ -11,11 +12,13 @@ class EventCreationUseCase:
             self, 
             image_service: ImageService, 
             event_repository: EventRepositoryImplementation,
-            event_detail_repository: EventDetailRepositoryImplementation
+            speaker_repos: SpeakerRepositoryImplementation,
+            event_speaker_repos: EventSpeakerRepositoryImplementation,
     ):
         self.image_service = image_service
         self.event_repository = event_repository
-        self.event_detail_repository = event_detail_repository
+        self.speaker_repos = speaker_repos
+        self.event_speaker_repos = event_speaker_repos
 
     async def call(self, params: EventCreationParams):
         try:
@@ -26,7 +29,6 @@ class EventCreationUseCase:
                         subdir=f"{uuid.uuid4()}-{params.title}"
                         )
 
-            # Save event to repository
             new_event = await self.event_repository.create_event(
                 title=params.title,
                 thumbnail_path=thumbnail_path,
@@ -37,32 +39,64 @@ class EventCreationUseCase:
                 ticket_price=params.ticket_price,
                 ticket_quantity=params.ticket_quantity,
                 start_date=params.start_date.strftime("%Y-%m-%d %H:%M:%S"),
-                event_organizer_id=params.event_organizer_id
+                event_organizer_id=params.event_organizer_id,
+                receptionist_1=params.receptionist_1,
+                receptionist_2=params.receptionist_2,
             )
 
-            if (new_event is not None):
-                # Save event details to repository
-                new_event_detail = await self.event_detail_repository.create_event_detail(
-                    event_id=new_event.event_id,
-                    event_receiptionist_id=params.event_receiptionist_id,
-                    speaker_id=params.speaker_id
-                )
+            speakers = params.speaker
+            new_speakers = []
+            if speakers and len(speakers) > 0:
+                for speaker in speakers:
+                    created = await self.speaker_repos.create(
+                            name=speaker.name,
+                            title=speaker.title,
+                            social_media_links=speaker.social_media_links,
+                            company=speaker.company
+                    )
+                    new_speakers.append(created.as_dict())
 
-                return {"message": "Event created successfully", "event": new_event.as_dict()}
-            
-            return {"message": "Something went wrong with the details", "error": {"event": new_event.as_dict()}}
+            new_event_speakers = []
+            if new_speakers and len(speakers) > 0:
+                for speaker in new_speakers:
+                    created_event_speaker = await self.event_speaker_repos.create(
+                            event_id=new_event.event_id,
+                            speaker_id=speaker["speaker_id"]
+                    )
+                    new_event_speakers.append(created_event_speaker.as_dict())
+
+            combined_data = {
+                "event": new_event.as_dict(),
+            }
+
+            if new_event_speakers:
+                combined_data["event"]["event_speakers"] = new_event_speakers
+
+            if new_speakers:
+                for combined_speaker in combined_data["event"]["event_speakers"]:
+                    for speaker in new_speakers:
+                        if combined_speaker["speaker_id"] == speaker["speaker_id"]:
+                            combined_speaker["speaker"] = speaker
+
+            return {
+                "message": "Event created successfully", 
+                "data": combined_data
+            }
         except Exception as e:
             return {"message": f"Error creating event: {str(e)}", "error": str(e)}
 
 class EventUpdateUseCase:
     def __init__(
             self, 
-            image_service: ImageService, event_repository,
-            event_detail_repository: EventDetailRepositoryImplementation
+            image_service: ImageService, 
+            event_repository: EventRepositoryImplementation,
+            speaker_repos: SpeakerRepositoryImplementation,
+            event_speaker_repos: EventSpeakerRepositoryImplementation,
         ):
         self.image_service = image_service
         self.event_repository = event_repository
-        self.event_detail_repository = event_detail_repository
+        self.speaker_repos = speaker_repos
+        self.event_speaker_repos = event_speaker_repos
 
     async def call(self, event_id: uuid.UUID, params: UpdateEventParams):
         try:
@@ -104,19 +138,16 @@ class EventUpdateUseCase:
                     **update_data
                 )
 
-                # Update event details
-                event_detail = await self.event_detail_repository.update_event_detail(
-                        event_detail_id=new_event.event_details[0].event_detail_id,
-                        event_id=event_id,
-                        event_receiptionist_id=params.event_receiptionist_id,
-                        speaker_id=params.speaker_id
-                        )
+                speakers = params.speaker
+                updated_speakers = []
+                if speakers:
+                    for speaker in speakers:
+                        updated = await self.speaker_repos.update(speaker.speaker_id, **speaker.dict())
+                        updated_speakers = updated.__dict__
+                        updated_speakers.append(updated)
 
-                if (event_detail is not None):
-                    return {"message": "Event updated successfully", "event": new_event.as_dict()}
-    
-                return {"message": "Something went wrong with the details", "error": {"event": new_event.as_dict()}}
 
+                return {"message": "Event updated successfully", "event": new_event.as_dict()}
             else:
                 return {"message": "No changes detected"}
 
@@ -154,7 +185,7 @@ class EventGetUseCase:
     async def call(self):
         try:
             events = await self.event_repository.get_all()
-            serialized_events = [event.as_dict_with_detail() for event in events]
+            serialized_events = [event.as_dict() for event in events]
 
             return {"message": "Events retrieved successfully", "events": serialized_events}
         except Exception as e:

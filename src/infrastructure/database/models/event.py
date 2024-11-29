@@ -73,3 +73,22 @@ class EventModel(Base):
             "created_at": self.created_at,
             "updated_at": self.updated_at
         }
+
+    def as_dict(self):
+        return {
+            "event_id": self.event_id,
+            "event_organizer_id": self.event_organizer_id,
+            "thumbnail_path": self.thumbnail_path,
+            "title": self.title,
+            "address": self.address,
+            "description": self.description,
+            "type": self.type,
+            "status": self.status,
+            "ticket_price": self.ticket_price,
+            "ticket_quantity": self.ticket_quantity,
+            "start_date": self.start_date,
+            "receptionist_1": self.receptionist_1,
+            "receptionist_2": self.receptionist_2,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }

@@ -38,3 +38,13 @@ class SpeakerModel(Base):
             "company": self.company,
             "created_at": self.created_at
         }
+
+    def as_dict(self):
+        return {
+            "speaker_id": self.speaker_id,
+            "name": self.name,
+            "title": self.title,
+            "social_media_links": self.social_media_links,
+            "company": self.company,
+            "created_at": self.created_at
+        }

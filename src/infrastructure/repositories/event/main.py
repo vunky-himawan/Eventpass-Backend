@@ -1,3 +1,4 @@
+from typing import Optional
 import uuid
 from infrastructure.database.models.event import EventModel
 from sqlalchemy.future import select
@@ -25,7 +26,11 @@ class EventRepositoryImplementation(EventRepository):
             events = await self.db.execute(
                     select(EventModel).where(EventModel.c.event_id == event_id)
             )
-            return events
+
+            if events.scalars().first() is None:
+                return None;
+
+            return events.scalars().first()
         except Exception as e:
             print(f"Error fetching events: {e}")
             raise e
@@ -41,7 +46,9 @@ class EventRepositoryImplementation(EventRepository):
             status: str, 
             ticket_price: int, 
             ticket_quantity: int, 
-            start_date: str
+            start_date: str,
+            receptionist_1: uuid.UUID,
+            receptionist_2: Optional[uuid.UUID] = None,
         ):
         try:
             event = EventModel(
@@ -54,7 +61,9 @@ class EventRepositoryImplementation(EventRepository):
                     status=status,
                     ticket_price=ticket_price,
                     ticket_quantity=ticket_quantity,
-                    start_date=start_date
+                    start_date=start_date,
+                    receptionist_1=receptionist_1,
+                    receptionist_2=receptionist_2
             )
             self.db.add(event)
             await self.db.commit()

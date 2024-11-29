@@ -1,10 +1,13 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional, Union
 import uuid
-from pydantic import BaseModel, field_validator
+from json_repair import json_repair
+from pydantic import BaseModel, Field, field_validator, model_validator, validator
 from fastapi import Form, File, UploadFile
 
 from interface.http.api.schemas.event.main import EventStatusEnum, EventTypeEnum
+from src.domain.entities.speaker.speaker import Speaker
+from src.interface.http.api.schemas.speaker.speaker_schema import SpeakerSchema
 
 class EventCreationRequest(BaseModel):
     title: str
@@ -17,14 +20,16 @@ class EventCreationRequest(BaseModel):
     ticket_quantity: int
     start_date: datetime
     event_organizer_id: str
-    speaker_id: Optional[uuid.UUID | str]
-    event_receiptionist_id: uuid.UUID
+    receptionist_1: uuid.UUID
+    receptionist_2: Optional[uuid.UUID]
 
-    @field_validator('speaker_id', mode='before')
-    def validate_speaker_id(cls, v):
+    speaker: str
+
+    @field_validator("receptionist_2", mode="before")
+    def validate_receptionist_2(cls, v):
         if v == "":
-            return None
-        return v
+            return None  # Convert empty string to None
+        return v  # Let Pydantic handle the validation for UUIDs
 
     @classmethod
     async def as_form(
@@ -39,8 +44,10 @@ class EventCreationRequest(BaseModel):
         start_date: datetime = Form(...),
         thumbnail: UploadFile = File(...),
         event_organizer_id: str = Form(...),
-        speaker_id: Optional[uuid.UUID | str] = Form(None),
-        event_receiptionist_id: uuid.UUID = Form(...),
+        receptionist_1: uuid.UUID = Form(...),
+        receptionist_2: Optional[uuid.UUID] = Form(None),
+
+        speaker: str = Form(...,example={"name": "John Doe", "title": "Speaker", "social_media_links": "https://twitter.com/johndoe", "company": "Company Name"}),
     ):
         return cls(
                 title=title, 
@@ -53,8 +60,10 @@ class EventCreationRequest(BaseModel):
                 ticket_quantity=ticket_quantity,
                 start_date=start_date,
                 event_organizer_id=event_organizer_id,
-                speaker_id=speaker_id,
-                event_receiptionist_id=event_receiptionist_id,
+                receptionist_1=receptionist_1,
+                receptionist_2=receptionist_2,
+
+                speaker=speaker,
         )
 
 class UpdateEventRequest(BaseModel):
@@ -68,10 +77,10 @@ class UpdateEventRequest(BaseModel):
     start_date: Optional[datetime]
     event_organizer_id: Optional[str]
     thumbnail: Optional[UploadFile]
-    speaker_id: Optional[uuid.UUID]
-    event_receiptionist_id: uuid.UUID
-    speaker_id: Optional[uuid.UUID]
-    event_receiptionist_id: uuid.UUID
+    receptionist_1: Optional[uuid.UUID]
+    receptionist_2: Optional[uuid.UUID]
+
+    speaker: Optional[List[str]]
 
     @classmethod
     async def as_form(
@@ -86,9 +95,10 @@ class UpdateEventRequest(BaseModel):
         start_date: Optional[datetime] = Form(None),  # Optional, defaults to None
         event_organizer_id: Optional[str] = Form(None),  # Optional, defaults to None
         thumbnail: Optional[UploadFile] = File(None),  # Optional, defaults to None
-        speaker_id: Optional[uuid.UUID] = Form(None),
-        event_receiptionist_id: uuid.UUID = Form(...),
+        receptionist_1: Optional[uuid.UUID] = Form(None),
+        receptionist_2: Optional[uuid.UUID] = Form(None),
 
+        speaker: Optional[List[str]] = Form(None),
     ):
         return cls(
             title=title,
@@ -101,6 +111,8 @@ class UpdateEventRequest(BaseModel):
             start_date=start_date,
             event_organizer_id=event_organizer_id,
             thumbnail=thumbnail,
-            speaker_id=speaker_id,
-            event_receiptionist_id=event_receiptionist_id,
+            receptionist_1=receptionist_1,
+            receptionist_2=receptionist_2,
+
+            speaker=speaker,
         )

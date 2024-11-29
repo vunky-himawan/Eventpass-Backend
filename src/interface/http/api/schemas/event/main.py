@@ -3,8 +3,6 @@ from pydantic import BaseModel
 from datetime import datetime
 from enum import Enum
 
-from interface.http.api.schemas.event.detail.main import EventDetailSchema
-
 
 class EventStatusEnum(str, Enum):
     BUKA = "BUKA"
@@ -32,12 +30,3 @@ class EventSchema(BaseModel):
     ticket_price: int
     ticket_quantity: int
     start_date: datetime
-
-class LocalDetail (BaseModel):
-        event_id: uuid.UUID
-        event_receiptionist: dict
-        speaker: str
-        employee: dict
-
-class EventWithDetailSchema(EventSchema):
-    detail: LocalDetail
