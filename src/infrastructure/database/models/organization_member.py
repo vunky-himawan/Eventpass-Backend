@@ -17,13 +17,51 @@ class OrganizationMemberModel(Base):
         String(36), ForeignKey("event_organizers.event_organizer_id"), nullable=False
     )
 
-    users: Mapped[List["UserModel"]] = relationship('UserModel', uselist=True, back_populates="organization_member")
-    event_organizer: Mapped["EventOrganizerModel"] = relationship('EventOrganizerModel', uselist=False, back_populates="organization_member")
-    attendances: Mapped[List["AttendanceModel"]] = relationship('AttendanceModel', uselist=True, back_populates="organization_member")
+    user: Mapped[List["UserModel"]] = relationship(
+            "UserModel", 
+            uselist=False, 
+            back_populates="organization_member",
+            lazy="selectin",
+    )
+    event_organizer: Mapped["EventOrganizerModel"] = relationship(
+            "EventOrganizerModel",  
+            uselist=False, 
+            back_populates="organization_member",
+            lazy="selectin",
+    )
+    attendances: Mapped[List["AttendanceModel"]] = relationship(
+            "AttendanceModel", 
+            uselist=True, 
+            back_populates="organization_member",
+            lazy="selectin",
+    )
 
     def to_dict(self):
         return {
             "organization_member_id": self.organization_member_id,
             "user_id": self.user_id,
             "event_organizer_id": self.event_organizer_id
+        }
+
+    def as_dict(self):
+        return {
+            "organization_member_id": self.organization_member_id,
+            "user_id": self.user_id,
+            "event_organizer_id": self.event_organizer_id
+        }
+
+    async def as_dict_with_relations_from_organization(self):
+        return {
+            "organization_member_id": self.organization_member_id,
+            "event_organizer_id": self.event_organizer_id,
+            "user": await self.user.as_dict_with_relations_from_organization_member(),
+        }
+
+    async def as_dict_with_relations(self):
+        return {
+            "organization_member_id": self.organization_member_id,
+            "user_id": self.user_id,
+            "event_organizer_id": self.event_organizer_id,
+            "user": await self.users.as_dict_with_relations(),
+            "event_organizer": await self.event_organizer.as_dict_with_relations(),
         }
