@@ -42,10 +42,30 @@ class ParticipantModel(Base):
     )
 
     user: Mapped["UserModel"] = relationship('UserModel', uselist=False, back_populates="participant")
-    transactions: Mapped[List["TransactionModel"]] = relationship('TransactionModel', uselist=True, back_populates="participant")
-    feedback_ratings: Mapped[List["FeedbackRatingModel"]] = relationship('FeedbackRatingModel', uselist=True, back_populates="participant")
-    face_photos: Mapped[List["FacePhotoModel"]] = relationship('FacePhotoModel', uselist=True, back_populates="participant")
-    attendances: Mapped[List["AttendanceModel"]] = relationship('AttendanceModel', uselist=True, back_populates="participant")
+    transactions: Mapped[List["TransactionModel"]] = relationship(
+            'TransactionModel', 
+            uselist=True, 
+            back_populates="participant",
+            lazy="selectin"
+    )
+    feedback_ratings: Mapped[List["FeedbackRatingModel"]] = relationship(
+            'FeedbackRatingModel', 
+            uselist=True, 
+            back_populates="participant",
+            lazy="selectin"
+    )
+    face_photos: Mapped[List["FacePhotoModel"]] = relationship(
+            'FacePhotoModel', 
+            uselist=True, 
+            back_populates="participant",
+            lazy="selectin"
+    )
+    attendances: Mapped[List["AttendanceModel"]] = relationship(
+            'AttendanceModel', 
+            uselist=True, 
+            back_populates="participant",
+            lazy="selectin"
+    )
 
     def to_dict(self):
         return {
@@ -58,4 +78,50 @@ class ParticipantModel(Base):
             "birth_date": self.birth_date,
             "created_at": self.created_at,
             "updated_at": self.updated_at
+        }
+
+    def as_dict(self):
+        return {
+            "participant_id": self.participant_id,
+            "user_id": self.user_id,
+            "participant_name": self.participant_name,
+            "age": self.age,
+            "gender": self.gender,
+            "amount": self.amount,
+            "birth_date": self.birth_date,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }
+
+    async def as_dict_with_relations_from_feedback_ratings(self):
+        return {
+            "participant_id": self.participant_id,
+            "user_id": self.user_id,
+            "participant_name": self.participant_name,
+            "age": self.age,
+            "gender": self.gender,
+            "amount": self.amount,
+            "birth_date": self.birth_date,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "user": self.user.as_dict(),
+            "transactions": [await transaction.as_dict_with_relations_from_participant() for transaction in self.transactions],
+            "attendances": [await attendance.as_dict_with_relations_from_participant() for attendance in self.attendances],
+        }
+    
+    async def as_dict_with_relations(self):
+        return {
+            "participant_id": self.participant_id,
+            "user_id": self.user_id,
+            "participant_name": self.participant_name,
+            "age": self.age,
+            "gender": self.gender,
+            "amount": self.amount,
+            "birth_date": self.birth_date,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "user": self.user.as_dict(),
+            "transactions": [await transaction.as_dict_with_relations() for transaction in self.transactions],
+            "feedback_ratings": [await feedback_rating.as_dict_with_relations() for feedback_rating in self.feedback_ratings],
+            "attendances": [await attendance.as_dict_with_relations() for attendance in self.attendances],
         }

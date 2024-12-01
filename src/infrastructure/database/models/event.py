@@ -20,7 +20,6 @@ class EventTypeEnum(enum.Enum):
     FESTIVAL = "FESTIVAL"
     LAINNYA = "LAINNYA"
     EXPO = "EXPO"
-    KONVENSI = "KONVENSI"
 
 class EventModel(Base):
     __tablename__ = "events"
@@ -50,10 +49,29 @@ class EventModel(Base):
     updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     tickets: Mapped[List["TicketModel"]] = relationship('TicketModel', uselist=True, back_populates="event")
-    feedback_ratings: Mapped[List["FeedbackRatingModel"]] = relationship('FeedbackRatingModel', uselist=True, back_populates="event")
-    event_organizer: Mapped["EventOrganizerModel"] = relationship('EventOrganizerModel', uselist=False, back_populates="events")
+    feedback_ratings: Mapped[List["FeedbackRatingModel"]] = relationship(
+            'FeedbackRatingModel', 
+            uselist=True, 
+            back_populates="event",
+            lazy="selectin"
+    )
+    event_organizer: Mapped["EventOrganizerModel"] = relationship(
+            'EventOrganizerModel', 
+            uselist=False, 
+            back_populates="events",
+            lazy="selectin"
+    )
     attendances: Mapped[List["AttendanceModel"]] = relationship('AttendanceModel', uselist=True, back_populates="event")
-    event_speakers: Mapped[List["EventSpeakerModel"]] = relationship('EventSpeakerModel', uselist=True, back_populates="event")
+    event_speakers: Mapped[List["EventSpeakerModel"]] = relationship(
+            'EventSpeakerModel', 
+            uselist=True, 
+            back_populates="event",
+            lazy="selectin",
+            cascade="all, delete-orphan"
+    )
+
+    class Config:
+        orm_mode = True
 
     def to_dict(self):
         return {
@@ -72,4 +90,45 @@ class EventModel(Base):
             "receptionist_2": self.receptionist_2,
             "created_at": self.created_at,
             "updated_at": self.updated_at
+        }
+
+    def as_dict(self):
+        return {
+            "event_id": self.event_id,
+            "event_organizer_id": self.event_organizer_id,
+            "thumbnail_path": self.thumbnail_path,
+            "title": self.title,
+            "address": self.address,
+            "description": self.description,
+            "type": self.type,
+            "status": self.status,
+            "ticket_price": self.ticket_price,
+            "ticket_quantity": self.ticket_quantity,
+            "start_date": self.start_date,
+            "receptionist_1": self.receptionist_1,
+            "receptionist_2": self.receptionist_2,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }
+
+    async def as_dict_with_relations(self):
+        return {
+            "event_id": self.event_id,
+            "event_organizer_id": self.event_organizer_id,
+            "thumbnail_path": self.thumbnail_path,
+            "title": self.title,
+            "address": self.address,
+            "description": self.description,
+            "type": self.type,
+            "status": self.status,
+            "ticket_price": self.ticket_price,
+            "ticket_quantity": self.ticket_quantity,
+            "start_date": self.start_date,
+            "receptionist_1": self.receptionist_1,
+            "receptionist_2": self.receptionist_2,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "event_organizer": self.event_organizer.as_dict(),
+            "event_speakers": [await event_speaker.as_dict_with_relations() for event_speaker in self.event_speakers],
+            "feedback_ratings": [await feedback_rating.as_dict_with_relations() for feedback_rating in self.feedback_ratings],
         }

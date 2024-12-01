@@ -1,9 +1,12 @@
 from abc import ABC, abstractmethod
+from typing import Optional, Union
 import uuid
+
+from src.infrastructure.database.models.event import EventModel
 
 class EventRepository(ABC):
     @abstractmethod
-    async def get_event(self, event_id:str | uuid.UUID):
+    async def get_event(self, event_id:str | uuid.UUID)-> Union[EventModel, None]:
         pass
 
     @abstractmethod
@@ -18,8 +21,10 @@ class EventRepository(ABC):
         status: str, 
         ticket_price: int, 
         ticket_quantity: int, 
-        start_date: str
-    ):
+        start_date: str,
+        receptionist_1: uuid.UUID,
+        receptionist_2: Optional[uuid.UUID],
+    ) -> Union[EventModel, None]:
         pass
 
     @abstractmethod

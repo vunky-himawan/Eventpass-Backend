@@ -27,7 +27,13 @@ class SpeakerModel(Base):
         DateTime(timezone=True), server_default=func.now()
     )
 
-    event_speakers: Mapped[List["EventSpeakerModel"]] = relationship('EventSpeakerModel', uselist=True, back_populates="speaker")
+    event_speakers: Mapped[List["EventSpeakerModel"]] = relationship(
+            'EventSpeakerModel', 
+            uselist=True, 
+            back_populates="speaker",
+            cascade="all, delete-orphan",
+            lazy="selectin"
+    )
 
     def to_dict(self):
         return {
@@ -37,4 +43,25 @@ class SpeakerModel(Base):
             "social_media_links": self.social_media_links,
             "company": self.company,
             "created_at": self.created_at
+        }
+
+    def as_dict(self):
+        return {
+            "speaker_id": self.speaker_id,
+            "name": self.name,
+            "title": self.title,
+            "social_media_links": self.social_media_links,
+            "company": self.company,
+            "created_at": self.created_at
+        }
+
+    async def as_dict_with_relations(self):
+        return {
+            "speaker_id": self.speaker_id,
+            "name": self.name,
+            "title": self.title,
+            "social_media_links": self.social_media_links,
+            "company": self.company,
+            "created_at": self.created_at,
+            "event_speakers": [event_speaker.as_dict() for event_speaker in self.event_speakers]
         }

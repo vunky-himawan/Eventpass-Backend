@@ -29,8 +29,18 @@ class FeedbackRatingModel(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    participant: Mapped["ParticipantModel"] = relationship('ParticipantModel', uselist=False, back_populates="feedback_ratings")
-    event: Mapped["EventModel"] = relationship('EventModel', uselist=False, back_populates="feedback_ratings")
+    participant: Mapped["ParticipantModel"] = relationship(
+            'ParticipantModel', 
+            uselist=False, 
+            back_populates="feedback_ratings",
+            lazy="selectin",
+    )
+    event: Mapped["EventModel"] = relationship(
+            'EventModel', 
+            uselist=False, 
+            back_populates="feedback_ratings",
+            lazy="selectin",
+    )
 
     def to_dict(self):
         return {
@@ -41,4 +51,27 @@ class FeedbackRatingModel(Base):
             "rating_feedback": self.rating_feedback,
             "created_at": self.created_at,
             "updated_at": self.updated_at
+        }
+
+    def as_dict(self):
+        return {
+            "feedback_rating_id": self.feedback_rating_id,
+            "participant_id": self.participant_id,
+            "event_id": self.event_id,
+            "rating_value": self.rating_value,
+            "rating_feedback": self.rating_feedback,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }
+
+    async def as_dict_with_relations(self):
+        return {
+            "feedback_rating_id": self.feedback_rating_id,
+            "participant_id": self.participant_id,
+            "event_id": self.event_id,
+            "rating_value": self.rating_value,
+            "rating_feedback": self.rating_feedback,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "participant": await self.participant.as_dict_with_relations_from_feedback_ratings(),
         }

@@ -1,30 +1,74 @@
+from typing import Optional
 import uuid
+
+from sqlalchemy.orm import selectinload
 from infrastructure.database.models.event import EventModel
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import and_, or_
+from sqlalchemy import String, and_, cast, func, or_
 from domain.repositories.event.main import EventRepository
 
 class EventRepositoryImplementation(EventRepository):
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_all(self):
+    async def get_all(self, current_page: int = 1, page_size: int = 10):
         try:
-            events = await self.db.execute(
-                    select(EventModel)
-                    .order_by(EventModel.created_at.desc())
-            )
+            query = select(EventModel).order_by(
+                    EventModel.created_at.desc()
+                    ).options(
+                        selectinload(EventModel.event_speakers),
+                        selectinload(EventModel.event_organizer)
+                    ).limit(
+                            page_size
+                    ).offset((current_page - 1) * page_size)
+
+            events = await self.db.execute(query)
             return events.scalars().all()
+        except Exception as e:
+            print(f"Error fetching events: {e}")
+            raise e
+
+    async def get_count_all(self):
+        try:
+            query = select(func.count(EventModel.event_id)).select_from(EventModel)
+
+            count = await self.db.execute(query)
+            return count.scalars().first()
         except Exception as e:
             print(f"Error fetching events: {e}")
             raise e
 
     async def get_event(self, event_id:str | uuid.UUID):
         try:
-            events = await self.db.execute(
-                    select(EventModel).where(EventModel.c.event_id == event_id)
+            if isinstance(event_id, str):
+                event_id = uuid.UUID(event_id)
+
+            query = select(EventModel).where(cast(EventModel.event_id, String) == str(event_id))
+
+            events = await self.db.execute(query)
+
+            event = events.scalars().first()
+            if event is None:
+                return None;
+
+            return event
+        except Exception as e:
+            print(f"Error fetching events: {e}")
+            raise e
+
+    async def get_all_by_title_or_type_or_status(self, title_or_type: str):
+        try:
+            query = select(EventModel).where(
+                or_(
+                    EventModel.title.ilike(f"%{title_or_type}%"),
+                    EventModel.type.ilike(f"%{title_or_type}%"),
+                    EventModel.status.ilike(f"%{title_or_type}%")
+                )
             )
+
+            results = await self.db.execute(query)
+            events = results.scalars().all()
             return events
         except Exception as e:
             print(f"Error fetching events: {e}")
@@ -41,7 +85,9 @@ class EventRepositoryImplementation(EventRepository):
             status: str, 
             ticket_price: int, 
             ticket_quantity: int, 
-            start_date: str
+            start_date: str,
+            receptionist_1: uuid.UUID,
+            receptionist_2: Optional[uuid.UUID] = None,
         ):
         try:
             event = EventModel(
@@ -54,7 +100,9 @@ class EventRepositoryImplementation(EventRepository):
                     status=status,
                     ticket_price=ticket_price,
                     ticket_quantity=ticket_quantity,
-                    start_date=start_date
+                    start_date=start_date,
+                    receptionist_1=receptionist_1,
+                    receptionist_2=receptionist_2
             )
             self.db.add(event)
             await self.db.commit()
@@ -69,12 +117,13 @@ class EventRepositoryImplementation(EventRepository):
             # Fetch the current event
             event = await self.db.get(EventModel, event_id)
             if not event:
-                return None
+                raise Exception("Event not found")
 
             # Update fields dynamically
             for key, value in update_data.items():
                 setattr(event, key, value)
 
+            print(f"Updated attributes: {update_data}")
             # Commit the changes
             await self.db.commit()
 
@@ -82,18 +131,16 @@ class EventRepositoryImplementation(EventRepository):
             await self.db.refresh(event)
             return event
         except Exception as e:
-            await self.db.rollback()
             print(f"Error updating event: {e}")
+            await self.db.rollback()
             raise e
 
     async def delete_event(self, event_id: uuid.UUID):
         try:
-            # Fetch the current event
             event = await self.db.get(EventModel, event_id)
             if not event:
-                return None
+                raise Exception("Event not found")
 
-            # Delete the event from the database
             await self.db.delete(event)
             await self.db.commit()
 
