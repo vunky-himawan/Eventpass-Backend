@@ -15,16 +15,22 @@ from interface.http.api.schemas.login.login_schema import LoginRequest
 from domain.usecases.login.login_usecase import LoginUseCase
 from infrastructure.services.jwt_token_service import JWTTokenService
 from domain.usecases.login.login_params import LoginParams
+from infrastructure.repositories.event.main import EventRepositoryImplementation
+from infrastructure.repositories.organization_member.organization_member_repository_implementation import OrganizationMemberRepositoryImplementation
 
 router = APIRouter()
 def get_login_usecase(db: AsyncSession = Depends(get_db)) -> LoginUseCase:
     user_repository = UserRepositoryImplementation(db)
+    event_repository = EventRepositoryImplementation(db)
+    organization_member_repository = OrganizationMemberRepositoryImplementation(db)
     authentication_repository = AuthenticationRepositoryImplementation(db)
     password_service = PasswordService()
     jwt_service = JWTTokenService()
 
     return LoginUseCase(
         authentication_repository=authentication_repository,
+        event_repository=event_repository,
+        organization_member_repository=organization_member_repository,
         jwt_service=jwt_service,
         password_service=password_service,
         user_repository=user_repository
@@ -42,6 +48,9 @@ async def login(request: LoginRequest, login_usecase: LoginUseCase = Depends(get
             username=request.username,
             password=request.password
         )
+
+        print(params.username)
+        print(params.password)
 
         result = await login_usecase.call(params)
 
@@ -106,9 +115,7 @@ async def register(
             return ErrorResponse(message="Gagal dalam proses pendaftaran", detail=result.error_message())
         
     except ValueError as e:
-        print("ValueError DI AUTH ROUTES: ", e)
         return ErrorResponse(message="Gagal dalam proses pendaftaran", detail="Terjadi kesalahan")
     except Exception as e:
-        print("Exception DI AUTH ROUTES: ", e)
         return ErrorResponse(message="Gagal dalam proses pendaftaran", detail="Terjadi kesalahan")
     

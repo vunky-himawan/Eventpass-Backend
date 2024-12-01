@@ -4,6 +4,8 @@ from domain.entities.user.user import User
 from jose import jwt
 from domain.entities.participant.participant import Participant
 from domain.entities.event_organizer.event_organizer import EventOrganizer
+from domain.entities.organization_member.organization_member import OrganizationMember
+from domain.entities.enum.role import Role
 
 class JWTTokenService:
     def __init__(self):
@@ -15,7 +17,7 @@ class JWTTokenService:
         self.ACCESS_TOKEN_EXPIRE = self._parse_expiration_time(os.getenv("ACCESS_TOKEN_EXPIRE", "30h"))
         self.REFRESH_TOKEN_EXPIRE = self._parse_expiration_time(os.getenv("REFRESH_TOKEN_EXPIRE", "3d"))
 
-    def create_access_token(self, user: User, details: Participant | EventOrganizer | None = None) -> str:
+    def create_access_token(self, user: User, event_id: str | None = None, details: Participant | EventOrganizer | OrganizationMember | None = None) -> str:
         expire = datetime.now() + self.ACCESS_TOKEN_EXPIRE
         to_encode = {
             "exp": expire,
@@ -31,11 +33,14 @@ class JWTTokenService:
             to_encode["sub"]["participant_name"] = details.participant_name
         elif details is not None and isinstance(details, EventOrganizer):
             to_encode["sub"]["organization_name"] = details.organization_name
+        elif details is not None and event_id is not None and isinstance(details, OrganizationMember):
+            to_encode["sub"]["organization_member_id"] = details.organization_member_id
+            to_encode["sub"]["event_id"] = event_id
     
         encoded_jwt = jwt.encode(to_encode, self.JWT_SECRET_KEY, algorithm=self.ALGORITHM)
         return encoded_jwt
     
-    def create_refresh_token(self, user: User, details: Participant | EventOrganizer | None = None) -> str:
+    def create_refresh_token(self, user: User, event_id: str | None = None, details: Participant | EventOrganizer | OrganizationMember | None = None) -> str:
         expire = datetime.now() + self.REFRESH_TOKEN_EXPIRE
         to_encode = {
             "exp": expire,
@@ -50,6 +55,9 @@ class JWTTokenService:
             to_encode["sub"]["participant_name"] = details.participant_name
         elif details is not None and isinstance(details, EventOrganizer):
             to_encode["sub"]["organization_name"] = details.organization_name
+        elif details is not None and event_id is not None and isinstance(details, OrganizationMember):
+            to_encode["sub"]["organization_member_id"] = details.organization_member_id
+            to_encode["sub"]["event_id"] = event_id
         
         encoded_jwt = jwt.encode(to_encode, self.JWT_REFRESH_SECRET_KEY, algorithm=self.ALGORITHM)
         return encoded_jwt

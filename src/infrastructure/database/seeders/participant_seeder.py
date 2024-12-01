@@ -50,7 +50,7 @@ async def participant_seeder(db: AsyncSession):
                 if face_photo.get("status") == "error":
                     continue
 
-                face_photo = await face_recognition_service.extract_face(face=face_photo.get("data").get("face"), image_array=face_photo.get("data").get("original_image"))
+                face_photo = await face_recognition_service.extract_face(faces=face_photo.get("data").get("faces"), image_array=face_photo.get("data").get("original_image"))
 
                 face_photo_path = image_service.save_face_data(image=face_photo, username=folder_name.lower().replace(" ", ""))
 
@@ -64,10 +64,13 @@ async def participant_seeder(db: AsyncSession):
                 file_paths.append(face_photo_path.get("data"))
                 features.append(feature_vector_blob)
 
+                print("test")
+
                 participants.append({
                     "username": folder_name.lower().replace(" ", ""),
                     "password": pwd_context.hash("12345678"),
                     "email": f"{folder_name.lower().replace(' ', '')}@eventpass.com",
+                    'profile_picture': face_photo_path.get("data"),
                     "role": "PARTICIPANT",
                     "details": {
                         "participant_name": folder_name.title(),
@@ -77,10 +80,13 @@ async def participant_seeder(db: AsyncSession):
                     }
                 })
 
+        print("INI PARTICIPANT", participants)
+
         for index, participant in enumerate(participants):
             new_user = UserModel(
                 username=participant["username"],
                 password=participant["password"],
+                profile_photo_path=participant["profile_picture"],
                 email=participant["email"],
                 role=participant["role"]
             )
@@ -112,5 +118,5 @@ async def participant_seeder(db: AsyncSession):
         await db.refresh(new_user)
 
     except Exception as e:
-        # await db.rollback()
+        await db.rollback()
         print(f"Error seeding participants: {e}")

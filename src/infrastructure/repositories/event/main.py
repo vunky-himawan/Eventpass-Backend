@@ -151,7 +151,7 @@ class EventRepositoryImplementation(EventRepository):
             print(f"Error deleting event: {e}")
             raise e
 
-    async def get_event_with_on_going_status_with_receptionist_id(self, receptionist_id: str) -> list[dict]:
+    async def get_event_with_on_going_status_with_receptionist_id(self, receptionist_id: str) -> dict:
         try:
             query = select(EventModel).where(
                 and_(

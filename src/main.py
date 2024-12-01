@@ -1,11 +1,15 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 import os
 import sys
 import importlib.util
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from fastapi_pagination import add_pagination
 from src.utils.symlink import create_symlinks
+from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -28,6 +32,7 @@ create_uploads_folder()
 create_symlinks(os.getenv("UPLOADS_DIR", "uploads"), os.getenv("STATIC_DIR", "dist"), "static", os.getenv("UPLOADS_DIR", "uploads"))
 
 app = FastAPI(title="Eventpass API", version="1.0.0")
+add_pagination(app)
 
 app.mount("/static", StaticFiles(directory=os.getenv("STATIC_DIR", "dist"),follow_symlink=True), name="static")
 app.add_middleware(
@@ -40,6 +45,19 @@ app.add_middleware(
 
 api_version = "v1"
 routes_directory = os.path.join(os.path.dirname(__file__), "interface", "http", "api", "routes")
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    errors = []
+    for error in exc.errors():
+        field = error.get("loc")[-1]
+        message = error.get("msg")
+        errors.append({"field": field, "message": message})
+
+    return JSONResponse(
+        status_code=HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": errors},
+    )
 
 def load_routes(directory: str, app: FastAPI, api_version: str):
     for root, _, files in os.walk(directory):

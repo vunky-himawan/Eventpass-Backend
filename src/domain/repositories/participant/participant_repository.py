@@ -10,3 +10,7 @@ class ParticipantRepository(ABC):
     @abstractmethod
     async def get_participant_by_user_id(self, user_id: str | uuid.UUID) -> Participant:
         pass
+
+    @abstractmethod
+    async def get_participant_by_username(self, username: str) -> dict:
+        pass

@@ -18,27 +18,18 @@ class FaceAttendanceConfirmationUseCase:
 
     async def call(self, params: FaceAttendanceConfirmationParams) -> Result[dict]:
         try:
-            result = await self.user_repository.get_user_by_username(username=params.participant_username)
-
-            if result.is_failed():
-                return Failed(message=result.error_message())
-            
-            user = result.result_value()
-
-            participant = await self.participant_repository.get_participant_by_user_id(user_id=user["user_id"])
-
-            if participant is None:
-                return Failed(message="Participant not found")
-            
             attendance = await self.attendance_repository.create_attendance(
                 event_id=params.event_id,
                 receptionist_id=params.receptionist_id,
-                participant_id=participant.participant_id,
+                participant_id=params.participant_id,
                 attended_method=AttendaceMethodEnum.WAJAH.value,
                 status=AttendanceStatusEnum.BERHASIL.value if params.is_correct else AttendanceStatusEnum.GAGAL.value
             )
 
             return Success(value=attendance.to_dict())
 
+        except ValueError as e:
+            print(f"Error creating attendance: {e}")
+            return Failed(message=str(e))
         except Exception as e:
             return Failed(message=str(e))

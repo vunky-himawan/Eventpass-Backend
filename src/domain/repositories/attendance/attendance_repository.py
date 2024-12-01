@@ -16,3 +16,7 @@ class AttendanceRepository(ABC):
     @abstractmethod
     async def get_attendance_history_by_receptionist_id(self, receptionist_id: str) -> List[dict]:
         pass
+
+    @abstractmethod
+    async def check_attendance_exists(self, event_id: str, participant_id: str, method: AttendaceMethodEnum, status: AttendanceStatusEnum) -> bool:
+        pass

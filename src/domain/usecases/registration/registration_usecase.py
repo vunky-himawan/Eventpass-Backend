@@ -46,14 +46,14 @@ class RegistrationUseCase:
 
             elif params.role == Role.PARTICIPANT.value:
                 # Get face photo
-                face_photo = await self.face_recignition_service.detect_faces(image=params.face_photo)
+                faces_photo = await self.face_recignition_service.detect_faces(image=params.face_photo)
 
-                if face_photo.get("status") == "error":
-                    return Failed(message=face_photo.get("message"))
+                if faces_photo.get("status") == "error":
+                    return Failed(message=faces_photo.get("message"))
                 
                 
-                face_photo = await self.face_recignition_service.extract_face(face=face_photo.get("data").get("face"), 
-                                                                            image_array=face_photo.get("data").get("original_image"))
+                face_photo = await self.face_recignition_service.extract_face(faces=faces_photo.get("data").get("faces"), 
+                                                                            image_array=faces_photo.get("data").get("original_image"))
                 
                 # Save face photo
                 face_photo_path = self.image_service.save_face_data(image=face_photo, 
@@ -61,8 +61,6 @@ class RegistrationUseCase:
                                 
                 if face_photo_path.get("status") == "error":
                     return Failed(message=face_photo_path.get("message"))
-                
-                print("Face photo path: ", face_photo_path)
                 
                 feature_vector = await self.face_recignition_service.feature_extraction(face_pixels=face_photo)
 
@@ -89,8 +87,6 @@ class RegistrationUseCase:
                 return Failed(message=new_user.error_message())
             
         except ValueError as e:
-            print("ValueError di REGISTRATION USE CASE: ", e)
             return Failed(message="Terjadi kesalahan dalam proses pendaftaran")
         except Exception as e:
-            print("EXCEPTION di REGISTRATION USE CASE: ", e)
             return Failed(message="Terjadi kesalahan dalam proses pendaftaran")

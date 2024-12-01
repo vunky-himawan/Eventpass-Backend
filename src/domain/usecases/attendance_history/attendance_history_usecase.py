@@ -14,8 +14,6 @@ class AttendanceHistoryUseCase:
             if results is None:
                 return Failed(message="Attendance not found")
             
-            print(results)
-            
             return Success(value=results)
 
         except ValueError as e:

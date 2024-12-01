@@ -13,6 +13,7 @@ from infrastructure.database.models.participant import ParticipantModel
 from infrastructure.database.models.face_photos import FacePhotoModel
 from infrastructure.database.models.event_organizer import EventOrganizerModel
 from datetime import datetime
+from domain.entities.organization_member.organization_member import OrganizationMember
 
 from interface.http.api.schemas.event_organizer.receptionis.main import Receptionist
 
@@ -50,7 +51,6 @@ class UserRepositoryImplementation(UserRepository):
             await self._db_session.flush()
 
             if (role == Role.RECEPTIONIST.value) and (details is not None):
-                details = OrganizationMemberModel(details.__dict__)
                 try:
                     new_receptionist = OrganizationMemberModel(
                         event_organizer_id=details.event_organizer_id,
@@ -60,15 +60,12 @@ class UserRepositoryImplementation(UserRepository):
                     self._db_session.add(new_receptionist)
                     await self._db_session.flush()
                 except ValueError as e:
-                    print("ERROR DI CREATE USER REPOSITORY IMPLEMENTATION: ", e)
                     await self._db_session.rollback()
                     return Failed(message="Terjadi kesalahan")
 
             if role == Role.PARTICIPANT.value:
                 if details is None:
                     return Failed(message="Participant details are required")
-
-                details = ParticipantModel(details.__dict__)
 
                 try:
                     new_participant = ParticipantModel(
@@ -94,16 +91,13 @@ class UserRepositoryImplementation(UserRepository):
                         self._db_session.add(feature)
 
                 except ValueError as e:
-                    print("ERROR DI CREATE USER REPOSITORY IMPLEMENTATION: ", e)
                     await self._db_session.rollback()
                     return Failed(message="Terjadi kesalahan")
                 except Exception as e:
-                    print("Exception: ", e)
                     await self._db_session.rollback()
                     return Failed(message="Terjadi kesalahan")
 
             elif role == Role.EVENT_ORGANIZER.value:
-                details = EventOrganizerModel(details.__dict__)
 
                 try:
                     new_event_organizer = EventOrganizerModel(
@@ -130,7 +124,6 @@ class UserRepositoryImplementation(UserRepository):
             return Success(value=self._model_to_entity(new_user_model))
 
         except Exception as e:
-            print("EXCEPTION DI USER REPOSITORY IMPLEMENTATION: ", e)
             await self._db_session.rollback()
             return Failed(message="Terjadi kesalahan")
     
@@ -178,8 +171,15 @@ class UserRepositoryImplementation(UserRepository):
                 query = select(UserModel).options(joinedload(UserModel.event_organizer)).where(UserModel.user_id == user.user_id)
                 result = await self._db_session.execute(query)
                 user = result.scalar_one()
-
+                
                 return Success(value=self._model_to_event_organizer(user.event_organizer))
+
+            elif user.role == Role.RECEPTIONIST.value:
+                query = select(UserModel).options(joinedload(UserModel.organization_member)).where(UserModel.user_id == user.user_id)
+                result = await self._db_session.execute(query)
+                user = result.scalar_one()
+
+                return Success(value=self._model_to_organization_member(user.organization_member))
             
             return Success(value=None)
 
@@ -221,7 +221,7 @@ class UserRepositoryImplementation(UserRepository):
             if user is None:
                 return Failed(message="User not found")
             
-            return Success(value=user.to_dict())
+            return Success(value=user.user_to_dict_with_details())
 
         except ValueError as e:
             return Failed(message="Terjadi kesalahan")
@@ -263,3 +263,11 @@ class UserRepositoryImplementation(UserRepository):
             created_at=model.created_at,
             updated_at=model.updated_at,
         )
+    
+    def _model_to_organization_member(self, model: OrganizationMemberModel) -> OrganizationMember:
+        return OrganizationMember(
+            organization_member_id=model.organization_member_id,
+            user_id=model.user_id,
+            event_organizer_id=model.event_organizer_id
+        )
+    

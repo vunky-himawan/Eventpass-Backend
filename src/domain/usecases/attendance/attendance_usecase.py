@@ -28,23 +28,45 @@ class AttendanceUseCase:
 
     async def call(self, params: AttendanceParams) -> Result[dict]:
         try:
-            organization_member = await self.organization_member_repository.get_organization_member_by_user_id(user_id=params.receptionist_id)
+            # Mengecek apakah ada face di gambar yang dikirim
+            has_face = await self.face_recognition_service.detect_faces(image=params.photo)
 
-            event = await self.event_repository.get_event_with_on_going_status_with_receptionist_id(receptionist_id=organization_member["organization_member_id"]);
+            if has_face["status"] == "error":
+                return Failed(message=has_face["message"])
+            
+            # Mendapatkan face dari gambar yang dikirim
+            faces = has_face["data"]["faces"]
+
+            # Mendapatkan gambar yang dikirim yang sudah diproses menjadi array
+            face_image = has_face["data"]["original_image"]
+
+            # Melakukan crop pada wajah yang dikirim
+            face_image = await self.face_recognition_service.extract_face(faces=faces, image_array=face_image)
+
+            # Mendapatkan feature embedding dari wajah yang dikirim
+            face_embedding = await self.face_recognition_service.feature_extraction(face_pixels=face_image)
+            target_embedding = np.squeeze(np.array(face_embedding.get("data")))
         
-            tickets = await self.ticket_repository.get_tickets_by_event_id(event_id=event["event_id"])
+            # Mendapatkan tickets yang ada di event
+            tickets = await self.ticket_repository.get_tickets_by_event_id(event_id=params.event_id)
 
+            # Mendapatkan event yang sedang berlangsung
+            event = await self.event_repository.get_event(event_id=params.event_id)
+            event_dict = event.to_dict()
+
+            # Mendapatkan transaksi yang ada di tickets
             transactions = [ticket.transaction for ticket in tickets]
-
             participants = [transaction.participant for transaction in transactions]
 
+            # Digunakan untuk menyimpan data yang dihasilkan dari proses pengamatan
             val_data = {}
 
+            # Mengambil data face embedding dari setiap participant
             for participant in participants:
                 feature_blob = await self.face_recognition_repository.get_face_embedding_by_participant_id(participant_id=participant.participant_id)
-
+                
+                # Mengubah tipe data dari blob ke array
                 feature_array = await self.face_recognition_service.from_blob(feature_blob["feature_vector"], shape=(512,))
-
                 feature_array = np.squeeze(feature_array)
 
                 if feature_array.ndim != 1:
@@ -56,31 +78,25 @@ class AttendanceUseCase:
 
                 val_data.update({user["username"]: feature_array})
 
-            has_face = await self.face_recognition_service.detect_faces(image=params.photo)
-
-            if has_face["status"] == "error":
-                return Failed(message=has_face["message"])
-            
-            face = has_face["data"]["face"]
-
-            face_image = has_face["data"]["original_image"]
-
-            face_image = await self.face_recognition_service.extract_face(face=face, image_array=face_image)
-
-            face_embedding = await self.face_recognition_service.feature_extraction(face_pixels=face_image)
-            target_embedding = np.squeeze(np.array(face_embedding.get("data")))
-
+            # Melakukan predict
             result = await self.face_recognition_service.predict(target_embedding=target_embedding, val_embeddings=val_data)
 
-            print(result)
+            user_result = await self.user_repository.get_user_by_username(username=result['username'])
+
+            if user_result.is_failed():
+                return Failed(message=user_result.error_message())
+
+            user = user_result.result_value()
 
             response = {
-                "event_id": event["event_id"],
-                "prediction": result
+                "event_id": event_dict["event_id"],
+                "prediction": result,
+                "user": user
             }
 
             return Success(value=response)
 
+        except ValueError as e:
+            return Failed(message=str(e))
         except Exception as e:
-            print("ERROR DI ATTENDANCE USECASE: ", e)
             return Failed(message=str(e))

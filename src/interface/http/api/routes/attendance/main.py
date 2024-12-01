@@ -1,6 +1,10 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession 
 from infrastructure.config.database import get_db
+from fastapi_pagination import Page, Params, paginate, set_page
+
+# Domain
+from domain.entities.attendance.attendance import Attendance
 
 # Services
 from infrastructure.services.face_recognition_service import FaceRecognitionService
@@ -58,7 +62,7 @@ def get_attendance_usecase(
     )
 
 
-@router.post("/",
+@router.post("",
              responses={
         200: {"model": SuccessResponse},
         400: {"model": ErrorResponse},
@@ -72,7 +76,8 @@ async def attendace(
     try:
         params = AttendanceParams(
             photo=request.photo,
-            receptionist_id=request.receptionist_id
+            receptionist_id=request.receptionist_id,
+            event_id=request.event_id
         )
 
         result = await attendance_usecase.call(params)
@@ -117,7 +122,7 @@ async def face_attendance_confirmation(
         params = FaceAttendanceConfirmationParams(
             is_correct=request.is_correct,
             receptionist_id=request.receptionist_id,
-            participant_username=request.participant_username,
+            participant_id=request.participant_id,
             event_id=request.event_id
         )
         
@@ -188,22 +193,23 @@ def get_attendance_repository(
 
 @router.get("/history/{receptionist_id}",
             responses={
-                200: {"model": SuccessResponse},
+                200: {"model": Page[dict]},
                 400: {"model": ErrorResponse},
                 500: {"model": ErrorResponse}
             },
 )
 async def get_attendance_history(
     receptionist_id: str,
+    params: Params = Depends(),
     attendance_history_usecase: AttendanceHistoryUseCase = Depends(get_attendance_repository)
 ):
     try:
+        set_page(Page[dict])
         results = await attendance_history_usecase.call(receptionist_id)
 
-        print("RESULTS: ", results.result_value())
-
         if results.is_success():
-            return SuccessResponse(message="History retrieved successfully", data=results.result_value())
+            print(results.result_value())
+            return paginate(results.result_value(), params)
         else:
             return ErrorResponse(message="History not retrieved", detail=results.error_message())
 
@@ -211,4 +217,5 @@ async def get_attendance_history(
         print(e)
         return ErrorResponse(message="Get history failed", data=str(e))
     except Exception as e:
+        print(e)
         return ErrorResponse(message="Get history failed", data=str(e))

@@ -1,5 +1,4 @@
 import uuid
-from domain.entities.result.result import Failed
 from domain.params.event.main import EventCreationParams, UpdateEventParams
 from infrastructure.repositories.event.main import EventRepositoryImplementation
 from infrastructure.services.image_service import ImageService
@@ -219,7 +218,6 @@ class EventGetUseCase:
                     }
              }
         except Exception as e:
-            print(f"Error retrieving events: {str(e)}")
             return {"message": f"Error retrieving events: {str(e)}", "error": str(e)}
 
     async def call_one(self, event_id: uuid.UUID):

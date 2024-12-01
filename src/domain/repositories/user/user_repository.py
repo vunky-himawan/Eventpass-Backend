@@ -35,7 +35,7 @@ class UserRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_user_details(self, user: User) -> Result[None | Participant | EventOrganizer]:
+    async def get_user_details(self, user: User) -> Result[dict]:
         pass
 
     @abstractmethod

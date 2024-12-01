@@ -3,7 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
 from infrastructure.database.models.participant import ParticipantModel
 from domain.entities.participant.participant import Participant
+from infrastructure.database.models.user import UserModel
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 class ParticipantRepositoryImplementation(ParticipantRepository):
     def __init__(self, db: AsyncSession):
@@ -43,3 +45,17 @@ class ParticipantRepositoryImplementation(ParticipantRepository):
         except Exception as e:
             print(f"Error fetching participant: {e}")
             raise e
+        
+    async def get_participant_by_username(self, username: str) -> dict:
+        try:
+            query = select(ParticipantModel).options(selectinload(ParticipantModel.user)).where(UserModel.username == username)
+
+            result = await self.db.execute(query)
+
+            participant = result.scalars().first()
+
+            return participant.participant_with_email()
+            
+        except Exception as e:
+            print(f"Error fetching participant: {e}")
+            raise e 
