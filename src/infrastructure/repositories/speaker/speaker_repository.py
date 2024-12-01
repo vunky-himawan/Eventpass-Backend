@@ -1,8 +1,9 @@
 import uuid
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.domain.entities.speaker.speaker import Speaker
+from src.domain.params.speaker.speaker_params import SpeakerParams
 from src.domain.repositories.speaker.speaker_repo import SpeakerRepository
 from src.infrastructure.database.models.speaker import SpeakerModel
 
@@ -44,14 +45,10 @@ class SpeakerRepositoryImplementation(SpeakerRepository):
             if not speaker:
                 raise Exception("Speaker not found")
 
-            # Update fields dynamically
             for key, value in update_data.items():
                 setattr(speaker, key, value)
 
-            # Commit the changes
             await self.db.commit()
-
-            # Refresh the instance to get updated data
             await self.db.refresh(speaker)
             return speaker
         except Exception as e:
@@ -67,21 +64,42 @@ class SpeakerRepositoryImplementation(SpeakerRepository):
 
             await self.db.delete(speaker)
             await self.db.commit()
-            return True
+            return speaker
         except Exception:
             await self.db.rollback()
             raise Exception("Failed to delete speaker")
 
-    async def get_all(self):
+    async def get_all(
+        self,
+        current_page: int = 1,
+        page_size: int = 10
+    ):
         try:
-            speakers = await self.db.execute(select(SpeakerModel))
-            entities = [SpeakerModel.to_entity(speaker) for speaker in speakers]
-            return entities
-        except Exception:
+            query = select(SpeakerModel).order_by(
+                    SpeakerModel.created_at.desc()
+                    ).limit(
+                            page_size
+                    ).offset((current_page - 1) * page_size)
+            speakers = await self.db.execute(query)
+            return speakers.scalars().all()
+        except Exception as e:
             await self.db.rollback()
-            raise Exception("Failed to get all speakers")
+            raise Exception("Failed to get all speakers\n" + str(e))
 
-    async def get_speaker(self, speaker_id: str):
+    async def get_by_name_or_title_or_company(self, params: SpeakerParams.Get):
+        try:
+            query = select(SpeakerModel).where(or_(
+                SpeakerModel.name.ilike(f"%{params.parameter}%"),
+                SpeakerModel.title.ilike(f"%{params.parameter}%"),
+                SpeakerModel.company.ilike(f"%{params.parameter}%")
+            )).limit(params.page_size).offset((params.page - 1) * params.page_size)
+            speaker = await self.db.execute(query)
+            return speaker.scalars().all()
+        except Exception as e:
+            await self.db.rollback()
+            raise Exception("Failed to get speakers by name, title, or company\n" + str(e))
+
+    async def get_speaker(self, speaker_id: str | uuid.UUID):
         try:
             speaker = await self.db.get(SpeakerModel, speaker_id)
             if not speaker:
@@ -90,4 +108,13 @@ class SpeakerRepositoryImplementation(SpeakerRepository):
         except Exception:
             await self.db.rollback()
             raise Exception("Failed to get speaker")
-
+    
+    async def find(self, speaker_id: uuid.UUID | str):
+        try:
+            speaker = await self.db.get(SpeakerModel, speaker_id)
+            if not speaker:
+                raise Exception("Speaker not found")
+            return speaker
+        except Exception:
+            await self.db.rollback()
+            raise Exception("Failed to find speaker")

@@ -12,7 +12,7 @@ class SpeakerRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_all(self) -> list[SpeakerModel]:
+    async def get_all(self, current_page: int = 1, page_size: int = 10) -> list[SpeakerModel]:
         pass
 
     @abstractmethod

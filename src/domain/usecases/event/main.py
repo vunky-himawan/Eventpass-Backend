@@ -207,11 +207,6 @@ class EventGetUseCase:
         try:
             events = await self.event_repository.get_all(current_page, page_size)
             serialized_events = [await event.as_dict_with_relations() for event in events]
-
-            # count = await self.event_repository.get_count_all()
-            # pages = 1
-            # if count and count > 1:
-            #     pages = (count + page_size - 1) // page_size if count > 0 else 1
             pages = await CountPage(EventModel, self.event_repository.db, page_size).count()
 
             return {

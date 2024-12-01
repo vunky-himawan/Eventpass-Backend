@@ -49,7 +49,12 @@ class EventModel(Base):
     updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     tickets: Mapped[List["TicketModel"]] = relationship('TicketModel', uselist=True, back_populates="event")
-    feedback_ratings: Mapped[List["FeedbackRatingModel"]] = relationship('FeedbackRatingModel', uselist=True, back_populates="event")
+    feedback_ratings: Mapped[List["FeedbackRatingModel"]] = relationship(
+            'FeedbackRatingModel', 
+            uselist=True, 
+            back_populates="event",
+            lazy="selectin"
+    )
     event_organizer: Mapped["EventOrganizerModel"] = relationship(
             'EventOrganizerModel', 
             uselist=False, 
@@ -124,5 +129,6 @@ class EventModel(Base):
             "created_at": self.created_at,
             "updated_at": self.updated_at,
             "event_organizer": self.event_organizer.as_dict(),
-            "event_speakers": [await event_speaker.as_dict_with_relations() for event_speaker in self.event_speakers]
+            "event_speakers": [await event_speaker.as_dict_with_relations() for event_speaker in self.event_speakers],
+            "feedback_ratings": [await feedback_rating.as_dict_with_relations() for feedback_rating in self.feedback_ratings],
         }
