@@ -3,8 +3,10 @@ from domain.entities.result.result import Failed
 from domain.params.event.main import EventCreationParams, UpdateEventParams
 from infrastructure.repositories.event.main import EventRepositoryImplementation
 from infrastructure.services.image_service import ImageService
+from src.infrastructure.database.models.event import EventModel
 from src.infrastructure.repositories.event_speaker.event_speaker_repos import EventSpeakerRepositoryImplementation
 from src.infrastructure.repositories.speaker.speaker_repository import SpeakerRepositoryImplementation
+from src.utils.count_page import CountPage
 
 
 class EventCreationUseCase:
@@ -206,14 +208,61 @@ class EventGetUseCase:
             events = await self.event_repository.get_all(current_page, page_size)
             serialized_events = [await event.as_dict_with_relations() for event in events]
 
+            # count = await self.event_repository.get_count_all()
+            # pages = 1
+            # if count and count > 1:
+            #     pages = (count + page_size - 1) // page_size if count > 0 else 1
+            pages = await CountPage(EventModel, self.event_repository.db, page_size).count()
+
             return {
                     "message": "Events retrieved successfully", 
                     "data": {
                         "events": serialized_events,
                         "current_page": current_page,
                         "page_size": page_size,
+                        "pages": pages,
                     }
              }
         except Exception as e:
             print(f"Error retrieving events: {str(e)}")
             return {"message": f"Error retrieving events: {str(e)}", "error": str(e)}
+
+    async def call_one(self, event_id: uuid.UUID):
+        try:
+            current_event = await self.event_repository.get_event(event_id)
+
+            if (current_event is None):
+                raise Exception("Event tidak ditemukan")
+
+            return {
+                    "message": "Event retrieved successfully", 
+                    "data": await current_event.as_dict_with_relations()
+             }
+        except Exception as e:
+            print(f"Error retrieving events: {str(e)}")
+            raise e
+
+    async def call_by_title_or_type(
+            self, 
+            params: str,
+            current_page: int = 1,
+            page_size: int = 10
+    ):
+        try:
+            events = await self.event_repository.get_all_by_title_or_type_or_status(params)
+            serialized_events = [await event.as_dict_with_relations() for event in events]
+
+            count = await CountPage(EventModel, self.event_repository.db, page_size).count_by("title", params)
+
+            return {
+                    "message": "Events retrieved successfully", 
+                    "data": {
+                        "events": serialized_events,
+                        "current_page": current_page,
+                        "page_size": page_size,
+                        "pages": count,
+                    }
+             }
+        except Exception as e:
+            print(f"Error retrieving events: {str(e)}")
+            raise e

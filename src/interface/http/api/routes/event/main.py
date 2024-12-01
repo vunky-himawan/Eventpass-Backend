@@ -95,6 +95,66 @@ async def get_events(
         status_code=200
     )
 
+@router.get(
+    "/{event_id}",
+    response_model=SuccessResponse,
+    responses={
+        200: {"model": SuccessResponse},
+        400: {"model": ErrorResponse},
+        500: {"model": ErrorResponse}
+    }
+)
+async def get_event(
+        event_id: uuid.UUID,
+        event_get_use_case: EventGetUseCase = Depends(get_event_get_usecase)
+):
+    try:
+        result = await event_get_use_case.call_one(event_id)
+
+        return SuccessResponse(
+            status="success",
+            message="Event retrieved successfully",
+            data=result["data"],
+            status_code=200
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get(
+    "/search/{title_or_type_or_status}",
+    response_model=SuccessResponse,
+    responses={
+        200: {"model": SuccessResponse},
+        400: {"model": ErrorResponse},
+        500: {"model": ErrorResponse}
+    }
+)
+async def get_events_by_title_or_type(
+        title_or_type: str,
+        page: int = 1,
+        page_size: int = 10,
+        event_get_use_case: EventGetUseCase = Depends(get_event_get_usecase)
+):
+    if (page < 1):
+        raise HTTPException(status_code=400, detail="Page must be greater than 0")
+    if (page_size < 1):
+        raise HTTPException(status_code=400, detail="Page size must be greater than 0")
+
+    try:
+        result = await event_get_use_case.call_by_title_or_type(title_or_type, page, page_size)
+
+        if "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
+
+        return SuccessResponse(
+            status="success",
+            message="Events retrieved successfully",
+            data=result["data"],
+            status_code=200
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @router.post(
     "/", 
     response_model=SuccessResponse[EventSchema],

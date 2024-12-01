@@ -5,7 +5,7 @@ from sqlalchemy.orm import selectinload
 from infrastructure.database.models.event import EventModel
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import String, and_, cast, or_
+from sqlalchemy import String, and_, cast, func, or_
 from domain.repositories.event.main import EventRepository
 
 class EventRepositoryImplementation(EventRepository):
@@ -14,17 +14,27 @@ class EventRepositoryImplementation(EventRepository):
 
     async def get_all(self, current_page: int = 1, page_size: int = 10):
         try:
-            events = await self.db.execute(
-                    select(EventModel)
-                    .order_by(EventModel.created_at.desc())
-                    .options(
+            query = select(EventModel).order_by(
+                    EventModel.created_at.desc()
+                    ).options(
                         selectinload(EventModel.event_speakers),
                         selectinload(EventModel.event_organizer)
-                    )
-                    .limit(page_size)
-                    .offset((current_page - 1) * page_size)
-            )
+                    ).limit(
+                            page_size
+                    ).offset((current_page - 1) * page_size)
+
+            events = await self.db.execute(query)
             return events.scalars().all()
+        except Exception as e:
+            print(f"Error fetching events: {e}")
+            raise e
+
+    async def get_count_all(self):
+        try:
+            query = select(func.count(EventModel.event_id)).select_from(EventModel)
+
+            count = await self.db.execute(query)
+            return count.scalars().first()
         except Exception as e:
             print(f"Error fetching events: {e}")
             raise e
@@ -43,6 +53,23 @@ class EventRepositoryImplementation(EventRepository):
                 return None;
 
             return event
+        except Exception as e:
+            print(f"Error fetching events: {e}")
+            raise e
+
+    async def get_all_by_title_or_type_or_status(self, title_or_type: str):
+        try:
+            query = select(EventModel).where(
+                or_(
+                    EventModel.title.ilike(f"%{title_or_type}%"),
+                    EventModel.type.ilike(f"%{title_or_type}%"),
+                    EventModel.status.ilike(f"%{title_or_type}%")
+                )
+            )
+
+            results = await self.db.execute(query)
+            events = results.scalars().all()
+            return events
         except Exception as e:
             print(f"Error fetching events: {e}")
             raise e
