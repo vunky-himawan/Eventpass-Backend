@@ -1,20 +1,28 @@
 from typing import Optional
 import uuid
+
+from sqlalchemy.orm import selectinload
 from infrastructure.database.models.event import EventModel
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import and_, or_
+from sqlalchemy import String, and_, cast, or_
 from domain.repositories.event.main import EventRepository
 
 class EventRepositoryImplementation(EventRepository):
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_all(self):
+    async def get_all(self, current_page: int = 1, page_size: int = 10):
         try:
             events = await self.db.execute(
                     select(EventModel)
                     .order_by(EventModel.created_at.desc())
+                    .options(
+                        selectinload(EventModel.event_speakers),
+                        selectinload(EventModel.event_organizer)
+                    )
+                    .limit(page_size)
+                    .offset((current_page - 1) * page_size)
             )
             return events.scalars().all()
         except Exception as e:
@@ -23,14 +31,18 @@ class EventRepositoryImplementation(EventRepository):
 
     async def get_event(self, event_id:str | uuid.UUID):
         try:
-            events = await self.db.execute(
-                    select(EventModel).where(EventModel.c.event_id == event_id)
-            )
+            if isinstance(event_id, str):
+                event_id = uuid.UUID(event_id)
 
-            if events.scalars().first() is None:
+            query = select(EventModel).where(cast(EventModel.event_id, String) == str(event_id))
+
+            events = await self.db.execute(query)
+
+            event = events.scalars().first()
+            if event is None:
                 return None;
 
-            return events.scalars().first()
+            return event
         except Exception as e:
             print(f"Error fetching events: {e}")
             raise e
@@ -78,12 +90,13 @@ class EventRepositoryImplementation(EventRepository):
             # Fetch the current event
             event = await self.db.get(EventModel, event_id)
             if not event:
-                return None
+                raise Exception("Event not found")
 
             # Update fields dynamically
             for key, value in update_data.items():
                 setattr(event, key, value)
 
+            print(f"Updated attributes: {update_data}")
             # Commit the changes
             await self.db.commit()
 
@@ -91,18 +104,16 @@ class EventRepositoryImplementation(EventRepository):
             await self.db.refresh(event)
             return event
         except Exception as e:
-            await self.db.rollback()
             print(f"Error updating event: {e}")
+            await self.db.rollback()
             raise e
 
     async def delete_event(self, event_id: uuid.UUID):
         try:
-            # Fetch the current event
             event = await self.db.get(EventModel, event_id)
             if not event:
-                return None
+                raise Exception("Event not found")
 
-            # Delete the event from the database
             await self.db.delete(event)
             await self.db.commit()
 

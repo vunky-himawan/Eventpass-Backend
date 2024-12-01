@@ -100,28 +100,26 @@ class EventUpdateUseCase:
 
     async def call(self, event_id: uuid.UUID, params: UpdateEventParams):
         try:
-            # Fetch the current event from the database
             current_event = await self.event_repository.get_event(event_id)
 
             if (current_event is None):
                 raise Exception("Event tidak ditemukan")
 
-            # Initialize update_data as a dictionary to track changes
             update_data = {}
 
-            # Prepare the parameters dynamically
-            params_dict = vars(params)  # Converts params to a dictionary
+            params_dict = vars(params)
 
-            # Compare and collect changed fields
             for field, new_value in params_dict.items():
-                if field == "thumbnail" or new_value is None:
+                if field == "thumbnail" or field == "speaker" or new_value is None:
                     continue
 
                 current_value = getattr(current_event, field)
                 if new_value is not None and new_value != current_value:
-                    update_data[field] = new_value
+                    if field == "status" or field == "type":
+                        update_data[field] = new_value.name
+                    else:
+                        update_data[field] = new_value
 
-            # Handle the thumbnail separately if provided
             if params.thumbnail:
                 filename = f"{uuid.uuid4().hex}_{params.thumbnail.filename}"
                 thumbnail_path = self.image_service.save_image(
@@ -130,47 +128,64 @@ class EventUpdateUseCase:
                     subdir=f"{uuid.uuid4()}-{params.title}"
                 )
                 update_data["thumbnail_path"] = thumbnail_path
-
-            # If there are any changes, update the event
+            
             if update_data:
                 new_event = await self.event_repository.update_event(
                     event_id=event_id,
                     **update_data
                 )
 
-                speakers = params.speaker
-                updated_speakers = []
-                if speakers:
-                    for speaker in speakers:
-                        updated = await self.speaker_repos.update(speaker.speaker_id, **speaker.dict())
-                        updated_speakers = updated.__dict__
-                        updated_speakers.append(updated)
+            new_event = await self.event_repository.get_event(event_id)
 
+            speakers = params.speaker
+            if speakers and len(speakers) > 0:
+                updated_event_speakers = []
+                for speaker in speakers:
+                    updated_event_speaker = await self.event_speaker_repos.update(
+                        event_speaker_id=speaker.event_speaker_id,
+                        event_id=speaker.event_id,
+                        speaker_id=speaker.speaker_id
+                    )
+                    updated_event_speakers.append(updated_event_speaker.as_dict())
 
-                return {"message": "Event updated successfully", "event": new_event.as_dict()}
+                if not updated_event_speakers:
+                    return {"message": "No changes detected", "data": None}
+                
+                with_relations = await current_event.as_dict_with_relations()
+
+                combined_data = {
+                    "event": with_relations,
+                }
+
+                return {
+                    "message": "Event updated successfully", 
+                    "data": combined_data
+                }
+
             else:
-                return {"message": "No changes detected"}
+                return {"message": "No changes detected", "data": None}
 
         except Exception as e:
-            return {"message": f"Error updating event: {str(e)}", "error": str(e)}
+            print(f"Error updating event: {str(e)}")
+            raise e
 
 class EventDeleteUseCase:
-    def __init__(self, event_repository):
+    def __init__(
+        self, 
+        event_repository: EventRepositoryImplementation
+    ):
         self.event_repository = event_repository
 
     async def call(self, event_id: uuid.UUID):
         try:
-            # Fetch the current event from the database
             current_event = await self.event_repository.get_event(event_id)
 
             if (current_event is None):
                 raise Exception("Event tidak ditemukan")
 
-            # Delete the event from the database
             await self.event_repository.delete_event(event_id)
 
             return {"message": "Event deleted successfully", "event": f"ID: {event_id} || Title: {current_event.title}"}
-
         except Exception as e:
             return {"message": f"Error deleting event: {str(e)}", "error": str(e)}
 
@@ -182,12 +197,23 @@ class EventGetUseCase:
     ):
         self.event_repository = event_repository
 
-    async def call(self):
+    async def call(
+            self, 
+            current_page: int = 1, 
+            page_size: int = 10
+    ):
         try:
-            events = await self.event_repository.get_all()
-            serialized_events = [event.as_dict() for event in events]
+            events = await self.event_repository.get_all(current_page, page_size)
+            serialized_events = [await event.as_dict_with_relations() for event in events]
 
-            return {"message": "Events retrieved successfully", "events": serialized_events}
+            return {
+                    "message": "Events retrieved successfully", 
+                    "data": {
+                        "events": serialized_events,
+                        "current_page": current_page,
+                        "page_size": page_size,
+                    }
+             }
         except Exception as e:
             print(f"Error retrieving events: {str(e)}")
             return {"message": f"Error retrieving events: {str(e)}", "error": str(e)}

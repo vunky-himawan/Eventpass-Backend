@@ -55,3 +55,32 @@ class EventOrganizerModel(Base):
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }
+
+    def as_dict(self):
+        return {
+            "event_organizer_id": self.event_organizer_id,
+            "organization_name": self.organization_name,
+            "address": self.address,
+            "phone_number": self.phone_number,
+            "email": self.email,
+            "description": self.description,
+            "amount": self.amount,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }
+
+    async def as_dict_with_relations(self):
+        return {
+            "event_organizer_id": self.event_organizer_id,
+            "organization_name": self.organization_name,
+            "address": self.address,
+            "phone_number": self.phone_number,
+            "email": self.email,
+            "description": self.description,
+            "amount": self.amount,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "user": await self.user.as_dict_with_relations(),
+            "organization_member": await self.organization_member.as_dict_with_relations(),
+            "events": [await event.as_dict_with_relations() for event in self.events]
+        }

@@ -3,6 +3,7 @@ from typing import List, Optional
 import uuid
 from fastapi import UploadFile
 
+from src.domain.entities.event_speaker.event_speaker import EventSpeakerInput
 from src.domain.entities.speaker.speaker import Speaker
 
 class EventCreationParams:
@@ -53,9 +54,9 @@ class UpdateEventParams:
             event_organizer_id: Optional[str],
             thumbnail: Optional[UploadFile],
 
-            speaker: Optional[List[Speaker]],
+            speaker: Optional[List[EventSpeakerInput]] = None,
 
-            receptionist_1: Optional[uuid.UUID],
+            receptionist_1: Optional[uuid.UUID] = None,
             receptionist_2: Optional[uuid.UUID] = None,
         ):
         self.title = title

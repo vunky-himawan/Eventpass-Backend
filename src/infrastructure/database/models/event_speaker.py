@@ -17,8 +17,18 @@ class EventSpeakerModel(Base):
                 String(36), ForeignKey("speakers.speaker_id"), nullable=False
     )
 
-    event: Mapped["EventModel"] = relationship('EventModel', uselist=False, back_populates="event_speakers")
-    speaker: Mapped["SpeakerModel"] = relationship('SpeakerModel', uselist=False, back_populates="event_speakers")
+    event: Mapped["EventModel"] = relationship(
+            'EventModel', 
+            uselist=False,
+            back_populates="event_speakers",
+            lazy="selectin"
+    )
+    speaker: Mapped["SpeakerModel"] = relationship(
+            'SpeakerModel', 
+            uselist=False, 
+            back_populates="event_speakers",
+            lazy="selectin"
+    )
 
 
     def to_dict(self):
@@ -33,4 +43,12 @@ class EventSpeakerModel(Base):
             "event_speaker_id": self.event_speaker_id,
             "event_id": self.event_id,
             "speaker_id": self.speaker_id
+    }
+
+    async def as_dict_with_relations(self):
+        return {
+            "event_speaker_id": self.event_speaker_id,
+            "event_id": self.event_id,
+            "speaker_id": self.speaker_id,
+            "speaker": self.speaker.as_dict()
         }

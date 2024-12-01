@@ -80,7 +80,7 @@ class UpdateEventRequest(BaseModel):
     receptionist_1: Optional[uuid.UUID]
     receptionist_2: Optional[uuid.UUID]
 
-    speaker: Optional[List[str]]
+    speaker: Optional[str]
 
     @classmethod
     async def as_form(
@@ -98,7 +98,10 @@ class UpdateEventRequest(BaseModel):
         receptionist_1: Optional[uuid.UUID] = Form(None),
         receptionist_2: Optional[uuid.UUID] = Form(None),
 
-        speaker: Optional[List[str]] = Form(None),
+        speaker: Optional[str] = Form(
+            None, 
+            example=[{"event_speaker_id": "e1a1d1e1-1a1d-1e1f-a1d1-1e1fa1d1e1f1", "speaker_id": "e1a1d1e1-1a1d-1e1f-a1d1-1e1fa1d1e1f1", "event_id": "e1a1d1e1-1a1d-1e1f-a1d1-1e1fa1d1e1f1"}]
+        ),
     ):
         return cls(
             title=title,

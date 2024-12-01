@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from json_repair import json_repair
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from domain.params.event.main import EventCreationParams
+from domain.params.event.main import EventCreationParams, UpdateEventParams
 from domain.usecases.event.main import EventCreationUseCase, EventDeleteUseCase, EventGetUseCase, EventUpdateUseCase
 from infrastructure.config.database import get_db
 from infrastructure.repositories.event.main import EventRepositoryImplementation
@@ -14,18 +14,18 @@ from infrastructure.services.image_service import ImageService
 from interface.http.api.requests.event.main import EventCreationRequest, UpdateEventRequest
 from interface.http.api.schemas.result.error_response import ErrorResponse
 from interface.http.api.schemas.result.success_response import SuccessResponse
+from src.domain.entities.event_speaker.event_speaker import EventSpeaker, EventSpeakerInput
 from src.domain.entities.speaker.speaker import Speaker, SpeakerInput
 from src.infrastructure.repositories.event_speaker.event_speaker_repos import EventSpeakerRepositoryImplementation
 from src.infrastructure.repositories.speaker.speaker_repository import SpeakerRepositoryImplementation
 from src.interface.http.api.schemas.event.main import EventSchema
-from fix_busted_json import to_array_of_plain_strings_or_json
 router = APIRouter()
 
 static_dir = os.getenv("STATIC_DIR", "dist")
 logger = logging.getLogger('uvicorn.error')
 
 def get_event_creation_usecase(db: AsyncSession = Depends(get_db)) -> EventCreationUseCase:
-    image_service = ImageService(storage_directory=os.path.join(static_dir, "uploads/event"))
+    image_service = ImageService(storage_directory=os.path.join("uploads/event"))
     event_repository = EventRepositoryImplementation(db)
     speaker_repos = SpeakerRepositoryImplementation(db)
     event_speaker_repos = EventSpeakerRepositoryImplementation(db)
@@ -66,7 +66,7 @@ def get_event_get_usecase(db: AsyncSession = Depends(get_db)) -> EventGetUseCase
 
 @router.get(
         "/",
-        response_model=SuccessResponse[EventSchema],
+        response_model=SuccessResponse,
         responses={
             200: {"model": SuccessResponse},
             400: {"model": ErrorResponse},
@@ -74,9 +74,16 @@ def get_event_get_usecase(db: AsyncSession = Depends(get_db)) -> EventGetUseCase
         }
     )
 async def get_events(
-        event_get_use_case: EventGetUseCase = Depends(get_event_get_usecase)
+        event_get_use_case: EventGetUseCase = Depends(get_event_get_usecase),
+        page: int = 1,
+        page_size: int = 10
 ):
-    result = await event_get_use_case.call()
+    if (page < 1):
+        raise HTTPException(status_code=400, detail="Page must be greater than 0")
+    if (page_size < 1):
+        raise HTTPException(status_code=400, detail="Page size must be greater than 0")
+
+    result = await event_get_use_case.call(current_page=page, page_size=page_size)
 
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
@@ -84,7 +91,7 @@ async def get_events(
     return SuccessResponse(
         status="success",
         message="Events retrieved successfully",
-        data=result["events"],
+        data=result["data"],
         status_code=200
     )
 
@@ -163,7 +170,7 @@ async def create_event(
 
 @router.put(
     "/{event_id}",
-    response_model=SuccessResponse[UpdateEventRequest],
+    response_model=SuccessResponse,
     responses={
         200: {"model": SuccessResponse[UpdateEventRequest]},
         400: {"model": ErrorResponse},
@@ -175,38 +182,63 @@ async def update_event(
     request: UpdateEventRequest = Depends(UpdateEventRequest.as_form),
     event_update_use_case: EventUpdateUseCase = Depends(get_event_update_usecase)
 ):
-    pass
-    # params = UpdateEventParams(
-    #     title=request.title,
-    #     address=request.address,
-    #     description=request.description,
-    #     type=request.type,
-    #     status=request.status,
-    #     ticket_price=request.ticket_price,
-    #     ticket_quantity=request.ticket_quantity,
-    #     start_date=request.start_date,
-    #     event_organizer_id=request.event_organizer_id,
-    #     thumbnail=request.thumbnail,
-    #     speaker_id=request.speaker_id,
-    #     event_receiptionist_id=request.event_receiptionist_id
-    # )
-    #
-    # try:
-    #     result = await event_update_use_case.call(event_id, params)
-    #
-    #     event_data = result["event"]
-    #     return SuccessResponse(
-    #         status="success",
-    #         message="Event updated successfully",
-    #         data=event_data,
-    #         status_code=200
-    #     )
-    # except Exception as e:
-    #     print(e)
-    #     if e == "Event tidak ditemukan":
-    #         raise HTTPException(status_code=404, detail={"error": str(e)})
-    #     else:
-    #         raise HTTPException(status_code=400, detail={"error": str(e)})
+    speakers = []
+    if request.speaker:
+        jsn = json_repair.loads(request.speaker)
+        speaker_attributes = ["event_speaker_id", "speaker_id", "event_id"]
+
+        if type(jsn) == list:
+            for speaker in jsn:
+                if all(key in speaker for key in speaker_attributes):
+                    parsed_speaker = EventSpeakerInput(**speaker)
+
+                    if not isinstance(parsed_speaker, EventSpeakerInput):
+                        raise HTTPException(status_code=400, detail=f"Speaker must contain {speaker_attributes}")
+                   
+                    entity_speaker = EventSpeaker(
+                        event_speaker_id=parsed_speaker.event_speaker_id,
+                        event_id=parsed_speaker.event_id,
+                        speaker_id=parsed_speaker.speaker_id
+                    )
+                    speakers.append(entity_speaker)
+                else:
+                    raise HTTPException(status_code=400, detail="Speaker must have name, title, social_media_links, company")
+        else:
+            raise HTTPException(status_code=400, detail="Speaker must be a list")
+
+    params = UpdateEventParams(
+        title=request.title,
+        address=request.address,
+        description=request.description,
+        type=request.type,
+        status=request.status,
+        ticket_price=request.ticket_price,
+        ticket_quantity=request.ticket_quantity,
+        start_date=request.start_date,
+        event_organizer_id=request.event_organizer_id,
+        thumbnail=request.thumbnail,
+        receptionist_1=request.receptionist_1,
+        receptionist_2=request.receptionist_2,
+
+        speaker=speakers,
+    )
+
+    try:
+        result = await event_update_use_case.call(event_id, params)
+
+        event_data = result["data"]
+        return SuccessResponse(
+            status="success",
+            message=result["message"],
+            data=event_data,
+            status_code=200
+        )
+    except Exception as e:
+        print(e)
+        if e == "Event tidak ditemukan":
+            raise HTTPException(status_code=404, detail={"error": str(e)})
+        else:
+            raise HTTPException(status_code=400, detail={"error": str(e)})
 
 @router.delete(
     "/{event_id}",

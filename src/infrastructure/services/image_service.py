@@ -1,7 +1,11 @@
 import os
 from PIL import Image
+from dotenv import dotenv_values
 from fastapi import UploadFile
 from datetime import datetime
+
+dotenv_values()
+static_dir = os.getenv("STATIC_DIR", "dist")
 
 class ImageService:
     def __init__(self, storage_directory: str):

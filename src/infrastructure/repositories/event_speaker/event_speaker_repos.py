@@ -20,6 +20,14 @@ class EventSpeakerRepositoryImplementation(EventSpeakerRepository):
             return [EventSpeakerModel.to_entity(event_speaker) for event_speaker in query]
         except Exception:
             raise Exception("Failed to get event speaker")
+
+    async def get_all(self):
+        try:
+            query = await self.db.execute(
+                    select(EventSpeakerModel))
+            return [EventSpeakerModel.to_entity(event_speaker) for event_speaker in query]
+        except Exception:
+            raise Exception("Failed to get event speaker")
     
     async def create(self, event_id: uuid.UUID | str, speaker_id: uuid.UUID | str):
         try:
@@ -46,7 +54,6 @@ class EventSpeakerRepositoryImplementation(EventSpeakerRepository):
                 setattr(event_speaker, key, value)
 
             await self.db.commit()
-
             await self.db.refresh(event_speaker)
             return event_speaker
         except Exception as e:

@@ -38,6 +38,7 @@ class SpeakerRepositoryImplementation(SpeakerRepository):
             speaker_id: uuid.UUID | str,
             **update_data
     ):
+        print(f"Updating speaker with id: {speaker_id}")
         try:
             speaker = await self.db.get(SpeakerModel, speaker_id)
             if not speaker:
@@ -53,8 +54,9 @@ class SpeakerRepositoryImplementation(SpeakerRepository):
             # Refresh the instance to get updated data
             await self.db.refresh(speaker)
             return speaker
-        except Exception:
+        except Exception as e:
             await self.db.rollback()
+            print(e)
             raise Exception("Failed to update speaker")
 
     async def delete(self, speaker_id: uuid.UUID | str):
