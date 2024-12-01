@@ -39,9 +39,24 @@ class EventOrganizerModel(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    user: Mapped["UserModel"] = relationship('UserModel', uselist=False, back_populates="event_organizer")
-    organization_member: Mapped["OrganizationMemberModel"] = relationship('OrganizationMemberModel', uselist=False, back_populates="event_organizer")
-    events: Mapped[List["EventModel"]] = relationship('EventModel', uselist=True, back_populates="event_organizer")
+    user: Mapped["UserModel"] = relationship(
+            "UserModel", 
+            uselist=False, 
+            back_populates="event_organizer",
+            lazy="selectin",
+    )
+    organization_member: Mapped["OrganizationMemberModel"] = relationship(
+            "OrganizationMemberModel", 
+            uselist=False, 
+            back_populates="event_organizer",
+            lazy="selectin",
+    )
+    events: Mapped[List["EventModel"]] = relationship(
+            "EventModel", 
+            uselist=True, 
+            back_populates="event_organizer",
+            lazy="selectin",
+    )
 
     def to_dict(self):
         return {
@@ -80,7 +95,7 @@ class EventOrganizerModel(Base):
             "amount": self.amount,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
-            "user": await self.user.as_dict_with_relations(),
-            "organization_member": await self.organization_member.as_dict_with_relations(),
-            "events": [await event.as_dict_with_relations() for event in self.events]
+            "user": await self.user.as_dict_with_relations_from_organization(),
+            "organization_member": await self.organization_member.as_dict_with_relations_from_organization(),
+            "events": [await event.as_dict_with_relations_from_organization() for event in self.events]
         }

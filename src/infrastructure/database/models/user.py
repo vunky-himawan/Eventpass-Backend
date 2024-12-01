@@ -27,10 +27,30 @@ class UserModel(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    participant: Mapped["ParticipantModel"] = relationship('ParticipantModel', uselist=False, back_populates="user")
-    event_organizer: Mapped["EventOrganizerModel"] = relationship('EventOrganizerModel', uselist=False, back_populates="user")
-    notifications: Mapped[List["NotificationModel"]] = relationship('NotificationModel', uselist=True, back_populates="user")
-    organization_member: Mapped["OrganizationMemberModel"] = relationship('OrganizationMemberModel', uselist=False, back_populates="users")
+    participant: Mapped["ParticipantModel"] = relationship(
+            "ParticipantModel", 
+            uselist=False, 
+            back_populates="user",
+            lazy="joined",
+    )
+    event_organizer: Mapped["EventOrganizerModel"] = relationship(
+            "EventOrganizerModel", 
+            uselist=False, 
+            back_populates="user",
+            lazy="joined",
+    )
+    notifications: Mapped[List["NotificationModel"]] = relationship(
+            "NotificationModel", 
+            uselist=True, 
+            back_populates="user",
+            lazy="joined",
+    )
+    organization_member: Mapped["OrganizationMemberModel"] = relationship(
+            "OrganizationMemberModel", 
+            uselist=True, 
+            back_populates="user",
+            lazy="joined",
+    )
 
     def to_dict(self):
         return {
@@ -44,12 +64,41 @@ class UserModel(Base):
             "updated_at": self.updated_at.isoformat(),
         }
 
-def add_row(engine, username: str, email: str, password: str, role: str, profile_photo_path: Optional[str]):
-    new_row = UserModel(username=username, email=email, password=password, role=role, profile_photo_path=profile_photo_path)
-    with Session(engine) as session:
-        try:
-            session.add(new_row)
-            session.commit()
-        except Exception as e:
-            session.rollback()  # Rolls back if there is an exception
-            print(f"Error occurred while adding a new row: {e}")
+    async def as_dict_with_relations_from_organization(self):
+        return {
+            "username": self.username,
+            "email": self.email,
+            "refresh_token": self.refresh_token,
+            "role": self.role,
+            "profile_photo": self.profile_photo_path,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "notifications": [await notification.as_dict_with_relations() for notification in self.notifications],
+        }
+
+    async def as_dict_with_relations_from_organization_member(self):
+        return {
+            "username": self.username,
+            "email": self.email,
+            "role": self.role,
+            "profile_photo": self.profile_photo_path,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
+
+    async def as_dict_with_relations(self):
+        return {
+            "user_id": self.user_id,
+            "username": self.username,
+            "email": self.email,
+            "refresh_token": self.refresh_token,
+            "role": self.role,
+            "profile_photo": self.profile_photo_path,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "participant": await self.participant.as_dict_with_relations(),
+            "event_organizer": await self.event_organizer.as_dict_with_relations(),
+            "notifications": [await notification.as_dict_with_relations() for notification in self.notifications],
+            "organization_member": [await organization_member.as_dict_with_relations() for organization_member in self.organization_member],
+        }
+

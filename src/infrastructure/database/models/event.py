@@ -111,6 +111,27 @@ class EventModel(Base):
             "updated_at": self.updated_at
         }
 
+    async def as_dict_with_relations_from_organization(self):
+        return {
+            "event_id": self.event_id,
+            "event_organizer_id": self.event_organizer_id,
+            "thumbnail_path": self.thumbnail_path,
+            "title": self.title,
+            "address": self.address,
+            "description": self.description,
+            "type": self.type,
+            "status": self.status,
+            "ticket_price": self.ticket_price,
+            "ticket_quantity": self.ticket_quantity,
+            "start_date": self.start_date,
+            "receptionist_1": self.receptionist_1,
+            "receptionist_2": self.receptionist_2,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "event_speakers": [await event_speaker.as_dict_with_relations() for event_speaker in self.event_speakers],
+            "feedback_ratings": [await feedback_rating.as_dict_with_relations() for feedback_rating in self.feedback_ratings],
+        }
+
     async def as_dict_with_relations(self):
         return {
             "event_id": self.event_id,
