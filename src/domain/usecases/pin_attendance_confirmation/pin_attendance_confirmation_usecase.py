@@ -32,6 +32,12 @@ class PinAttendanceConfirmationUseCase:
             
             participantId = transaction["participant_id"]
 
+            attendance = await self.attendance_repository.create_attendance(event_id=ticket["event_id"],
+                                                                            receptionist_id=params.receptionist_id,
+                                                                            participant_id=participantId,
+                                                                            attended_method=AttendaceMethodEnum.WAJAH.value,
+                                                                            status=AttendanceStatusEnum.GAGAL.value)
+
             attendance = await self.attendance_repository.create_attendance(event_id=ticket["event_id"], 
                                                                             receptionist_id=params.receptionist_id, 
                                                                             participant_id=participantId, 

@@ -15,12 +15,22 @@ class AuthenticationRepositoryImplementation(AuthenticationRepository):
             result = await self._db_session.execute(query)
             user = result.scalar_one_or_none()
 
+            print("awdawdaw")
+            print(user)
+
             if user is None:
                 return Failed(message="Pengguna tidak ditemukan")
             
+            print("Nih user")
+            print(user)
+            
             return Success(value=self._model_to_entity(user))
 
+        except ValueError as e:
+            print(e)
+            return Failed(message=str(e))
         except Exception as e:
+            print(e)
             return Failed(message=str(e))
 
     async def get_user_by_email(self, email: str) -> Result[User]:

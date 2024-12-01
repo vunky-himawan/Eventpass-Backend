@@ -17,6 +17,9 @@ class AttendanceRepositoryImplementation(AttendanceRepository):
                                 attended_method: AttendaceMethodEnum, 
                                 status: AttendanceStatusEnum) -> Attendance:
         try:
+            if await self.check_attendance_exists(event_id, participant_id, attended_method, status):
+                raise ValueError("Pengunjung sudah melakukan absensi")
+
             attendance = AttendanceModel(
                 event_id=event_id,
                 receptionist_id=receptionist_id,
@@ -42,8 +45,6 @@ class AttendanceRepositoryImplementation(AttendanceRepository):
                 updated_at=attendance.updated_at
             )
 
-            print("Attendance created successfully ", attendance)
-
             return attendance
 
         except ValueError as e:
@@ -62,19 +63,9 @@ class AttendanceRepositoryImplementation(AttendanceRepository):
             attendances = []
 
             for result in results:
-                attendance = Attendance(
-                    event_attendance_id=result.attendance_id,
-                    event_id=result.event_id,
-                    receptionist_id=result.receptionist_id,
-                    participant_id=result.participant_id,
-                    attended_in_at=result.attended_in_at,
-                    attendance_method=result.attendance_method,
-                    status=result.status,
-                    created_at=result.created_at,
-                    updated_at=result.updated_at
-                )
+                attendance = result.to_dict_with_participant()
 
-                attendances.append(attendance.to_dict())
+                attendances.append(attendance)
 
             return attendances
 
@@ -83,4 +74,22 @@ class AttendanceRepositoryImplementation(AttendanceRepository):
             raise e
         except Exception as e:
             print(f"Error getting attendance history: {e}")
+            raise e
+        
+    async def check_attendance_exists(self, event_id: str, participant_id: str, method: AttendaceMethodEnum, status: AttendanceStatusEnum) -> bool:
+        try:
+            query = select(AttendanceModel).where(AttendanceModel.event_id == event_id, AttendanceModel.participant_id == participant_id, AttendanceModel.attendance_method == method, AttendanceModel.status == status)
+            execution_result = await self.db.execute(query)
+            results = execution_result.scalars().all()
+            
+            if len(results) > 0:
+                return True
+            else:
+                return False
+
+        except ValueError as e:
+            print(f"Error checking attendance exists: {e}")
+            raise e
+        except Exception as e:
+            print(f"Error checking attendance exists: {e}")
             raise e

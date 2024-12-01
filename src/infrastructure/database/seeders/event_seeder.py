@@ -36,8 +36,11 @@ async def event_seeder(db: AsyncSession):
         thumbnail_dir = "src/infrastructure/database/seeders/thumbnail"
         thumbnail_path = os.path.join(thumbnail_dir, os.listdir(thumbnail_dir)[0])
 
+        print("NIH", thumbnail_path)
+
         with open(thumbnail_path, "rb") as image_file:
             simulated_file = io.BytesIO(image_file.read())
+            simulated_file.seek(0)
             upload_file = StarletteUploadFile(filename="thumbnail.jpg", file=simulated_file)
 
         events = [
@@ -145,6 +148,11 @@ async def event_seeder(db: AsyncSession):
 
         await db.commit()
         await db.refresh(events)
+
+
+    except ValueError as e:
+        await db.rollback()
+        print(f"Error awdaw events: {e}")
 
     except Exception as e:
         await db.rollback()

@@ -32,6 +32,7 @@ async def run_seeders():
                 await db.commit()
                 print("Seeding completed successfully!")
     except Exception as e:
+        print(e)
         if isinstance(db, AsyncSession):
             await db.rollback()
             print(f"Error running seeders: {e}")

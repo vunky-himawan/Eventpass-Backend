@@ -1,4 +1,4 @@
-from sqlalchemy import String, DateTime, ForeignKey, Enum as SQLAlchemyEnum
+from sqlalchemy import String, DateTime, ForeignKey, Enum as SQLAlchemyEnum, UniqueConstraint
 from ...config.database import Base
 import uuid
 from sqlalchemy.sql import func
@@ -45,6 +45,10 @@ class AttendanceModel(Base):
             lazy="selectin"
     )
 
+    __table_args__ = (
+        UniqueConstraint('event_id', 'participant_id', 'attendance_method', 'status', name='unique_event_participant_method_status'),
+    )
+
     def to_dict(self):
         return {
             "attendance_id": self.attendance_id,
@@ -71,6 +75,7 @@ class AttendanceModel(Base):
             "updated_at": self.updated_at
         }
 
+    
     async def as_dict_with_relations_from_participant(self):
         return {
             "attendance_id": self.attendance_id,
@@ -101,3 +106,18 @@ class AttendanceModel(Base):
             "event": await self.event.as_dict_with_relations(),
             "organization_member": await self.organization_member.as_dict_with_relations(),
         }
+    
+    def to_dict_with_participant(self):
+        return {
+            "attendance_id": self.attendance_id,
+            "event_id": self.event_id,
+            "receptionist_id": self.receptionist_id,
+            "participant_id": self.participant_id,
+            "attended_in_at": self.attended_in_at,
+            "attendance_method": self.attendance_method,
+            "status": self.status,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "participant": self.participant.to_dict()
+        }
+        

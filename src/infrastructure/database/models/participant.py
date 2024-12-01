@@ -109,6 +109,7 @@ class ParticipantModel(Base):
             "attendances": [await attendance.as_dict_with_relations_from_participant() for attendance in self.attendances],
         }
     
+    
     async def as_dict_with_relations(self):
         return {
             "participant_id": self.participant_id,
@@ -124,4 +125,18 @@ class ParticipantModel(Base):
             "transactions": [await transaction.as_dict_with_relations() for transaction in self.transactions],
             "feedback_ratings": [await feedback_rating.as_dict_with_relations() for feedback_rating in self.feedback_ratings],
             "attendances": [await attendance.as_dict_with_relations() for attendance in self.attendances],
+        }
+
+    def participant_with_email(self):
+        return {
+            "participant_id": self.participant_id,
+            "user_id": self.user_id,
+            "participant_name": self.participant_name,
+            "age": self.age,
+            "gender": self.gender.name,
+            "amount": self.amount,
+            "birth_date": self.birth_date,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "email": self.user.email
         }

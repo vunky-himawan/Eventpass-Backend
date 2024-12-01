@@ -41,17 +41,15 @@ class RegistrationRequest(BaseModel):
         if details:
             try:
                 repaired_details = json_repair.repair_json(details)
-                print("Received details:", repaired_details)
                 details_dict = json.loads(str(repaired_details))
-                if role == "PARTICIPANT":
+                if role.value == "PARTICIPANT":
                     parsed_details = Participant(**details_dict)
-                elif role == "EVENT_ORGANIZER":
+                elif role.value == "EVENT_ORGANIZER":
                     parsed_details = EventOrganizer(**details_dict)
-                if role == "RECEPTIONIST":
+                if role.value == "RECEPTIONIST":
                     parsed_details = Receptionist(**details_dict)
-            # except json.JSONDecodeError as e:
-            #     raise ValueError(f"Invalid JSON format in 'details'. Please check your input. Error: {str(e)}")
             except ValidationError as e:
+                print(e)
                 raise ValueError(f"Invalid data for {role}. Validation error: {str(e)}")
 
         return cls(

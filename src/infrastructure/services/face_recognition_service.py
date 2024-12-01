@@ -30,34 +30,37 @@ class FaceRecognitionService:
             # Mengambil data face
             faces = detector.detect_faces(image_array)
 
-            if len(faces) == 0:
+            if not faces:
                 return {
                     "status": "error",
                     "message": "Tidak ada wajah yang ditemukan"
-                }
-            elif len(faces) > 1:
-                return {
-                    "status": "error",
-                    "message": "Terdapat lebih dari satu wajah"
                 }
             
             return {
                 "status": "success",
                 "message": "Wajah ditemukan",
                 "data": {
-                    "face": faces[0],
+                    "faces": faces,
                     "original_image": image_array
                 }
             }
 
         except Exception as e:
-            print(f"Error detecting faces: {e}")
-            return False
+            return {
+                "status": "error",
+                "message": f"Error detecting faces: {e}"
+            }
         
-    async def extract_face(self, face: np.ndarray, image_array: np.ndarray) -> Image:
+    async def extract_face(self, faces: list[dict], image_array: np.ndarray) -> Image:
         try:
-            x, y, width, height = face['box']
+            print(f"Faces: {faces}")
+
+            # Cari wajah dengan ukuran bounding box terbesar
+            largest_face = max(faces, key=lambda face: face['box'][2] * face['box'][3])  # width * height
             
+            # Ekstrak koordinat dari bounding box
+            x, y, width, height = largest_face['box']
+
             # Menambahkan margin 100px di setiap sisi
             margin = 100
             x = max(x - margin, 0)
@@ -81,6 +84,7 @@ class FaceRecognitionService:
             return resized_image
         except Exception as e:
             print(f"Error preprocessing image: {e}")
+            return None
 
     async def feature_extraction(self, face_pixels: Image) -> dict:
         try:

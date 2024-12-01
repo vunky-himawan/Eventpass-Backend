@@ -17,7 +17,7 @@ class OrganizationMemberModel(Base):
         String(36), ForeignKey("event_organizers.event_organizer_id"), nullable=False
     )
 
-    user: Mapped[List["UserModel"]] = relationship(
+    users: Mapped[List["UserModel"]] = relationship(
             "UserModel", 
             uselist=False, 
             back_populates="organization_member",
