@@ -249,6 +249,28 @@ class UserRepositoryImplementation(UserRepository):
             return Failed(message="Terjadi kesalahan")
         except Exception as e:
             return Failed(message="Terjadi kesalahan")
+        
+    async def change_password(self, user_id: str, new_password: str) -> Result[bool]:
+        try:
+            query = select(UserModel).where(UserModel.user_id == user_id)
+            result = await self._db_session.execute(query)
+            user = result.scalar_one()
+
+            if user is None:
+                return Failed(message="User not found")
+            
+            user.password = new_password
+            await self._db_session.flush()
+            await self._db_session.commit()
+            await self._db_session.refresh(user)
+            
+            return Success(value=True)
+
+        except ValueError as e:
+            return Failed(message="Terjadi kesalahan")
+        except Exception as e:
+            return Failed(message="Terjadi kesalahan")
+            
 
     def _model_to_entity(self, model: UserModel) -> User:
         return User(
@@ -294,3 +316,4 @@ class UserRepositoryImplementation(UserRepository):
             event_organizer_id=model.event_organizer_id
         )
     
+
