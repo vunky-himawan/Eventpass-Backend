@@ -1,6 +1,6 @@
 import datetime
 from typing import Optional
-from sqlalchemy import String, DateTime, Enum as SQLAlchemyEnum
+from sqlalchemy import String, DateTime, Enum as SQLAlchemyEnum, Text
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped, Session, mapped_column, relationship
 from ...config.database import Base
@@ -23,7 +23,7 @@ class UserModel(Base):
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[str] = mapped_column(SQLAlchemyEnum(RoleEnum), nullable=True)
     profile_photo_path: Mapped[str] = mapped_column(String(255), nullable=True)
-    refresh_token: Mapped[str] = mapped_column(String(400), nullable=True)
+    refresh_token: Mapped[str] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
@@ -44,7 +44,7 @@ class UserModel(Base):
             "updated_at": self.updated_at.isoformat(),
         }
     
-    def user_to_dict_with_details(self):
+    def user_to_dict_with_details(self, with_password: bool | None = None):
         details = None
         
         if self.role == RoleEnum.PARTICIPANT:
@@ -53,10 +53,8 @@ class UserModel(Base):
             details = self.event_organizer.to_dict()
         elif self.role == RoleEnum.RECEPTIONIST:
             details = self.organization_member.to_dict()
-        
-        print("Details", details)
 
-        return {
+        result = {
             "user_id": self.user_id,
             "username": self.username,
             "email": self.email,
@@ -67,6 +65,11 @@ class UserModel(Base):
             "updated_at": self.updated_at.isoformat(),
             "details": details
         }
+
+        if with_password:
+            result["password"] = self.password
+
+        return result
 
     async def as_dict_with_relations_from_organization(self):
         return {

@@ -69,6 +69,13 @@ class EventModel(Base):
             lazy="selectin",
             cascade="all, delete-orphan"
     )
+    event_participants: Mapped[List["EventParticipantModel"]] = relationship(
+            'EventParticipantModel', 
+            uselist=True, 
+            back_populates="event",
+            lazy="selectin",
+            cascade="all, delete-orphan"
+    )
 
     class Config:
         orm_mode = True

@@ -6,6 +6,18 @@ from src.infrastructure.database.models.event import EventModel
 
 class EventRepository(ABC):
     @abstractmethod
+    async def get_all_by_title_or_type_or_status(self, title_or_type: str):
+        pass
+    
+    @abstractmethod
+    async def get_count_all(self):
+        pass
+
+    @abstractmethod
+    async def get_all(self, current_page: int = 1, page_size: int = 10):
+        pass
+
+    @abstractmethod
     async def get_event(self, event_id:str | uuid.UUID)-> Union[EventModel, None]:
         pass
 
@@ -37,4 +49,12 @@ class EventRepository(ABC):
 
     @abstractmethod
     async def get_event_with_on_going_status_with_receptionist_id(self, receptionist_id: str) -> list[dict]:
+        pass
+
+    @abstractmethod
+    async def substract_ticket(self, event_id: uuid.UUID) -> bool:
+        pass
+
+    @abstractmethod
+    async def get_upcoming_events(self, current_page: int, page_size: int) -> list[dict]:
         pass

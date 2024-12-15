@@ -74,3 +74,8 @@ class UpdateEventParams:
 
         self.receptionist_1 = receptionist_1
         self.receptionist_2 = receptionist_2
+
+class RegistrationEventParams:
+    def __init__(self, event_id: str, participant_id: str):
+        self.event_id = event_id
+        self.participant_id = participant_id

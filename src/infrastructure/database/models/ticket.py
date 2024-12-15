@@ -1,4 +1,4 @@
-from sqlalchemy import String, DateTime, ForeignKey
+from sqlalchemy import String, DateTime, ForeignKey, UniqueConstraint
 from ...config.database import Base
 import uuid
 from sqlalchemy.sql import func
@@ -28,6 +28,11 @@ class TicketModel(Base):
 
     event: Mapped["EventModel"] = relationship('EventModel', uselist=False, back_populates="tickets")
     transaction: Mapped["TransactionModel"] = relationship('TransactionModel', uselist=False, back_populates="ticket", lazy="joined")
+    event_participant: Mapped["EventParticipantModel"] = relationship('EventParticipantModel', uselist=False, back_populates="ticket")
+
+    __table_args__ = (
+        UniqueConstraint('event_id', 'pin', name='unique_event_pin'),
+    )
 
     def to_dict(self):
         return {

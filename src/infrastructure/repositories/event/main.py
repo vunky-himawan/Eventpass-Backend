@@ -1,5 +1,6 @@
 from typing import Optional
 import uuid
+from datetime import datetime
 
 from sqlalchemy.orm import selectinload
 from infrastructure.database.models.event import EventModel
@@ -8,9 +9,35 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import String, and_, cast, func, or_
 from domain.repositories.event.main import EventRepository
 
+
 class EventRepositoryImplementation(EventRepository):
     def __init__(self, db: AsyncSession):
         self.db = db
+
+    async def get_upcoming_events(self, current_page: int = 1, page_size: int = 10) -> list[dict]:
+        try:
+            today = datetime.today()
+            query = select(EventModel).where(
+                EventModel.start_date >= today
+            ).order_by(
+                EventModel.start_date.asc()
+            ).options(
+                selectinload(EventModel.event_speakers),
+                selectinload(EventModel.event_organizer)
+            ).limit(
+                page_size
+            ).offset((current_page - 1) * page_size)
+
+            events = await self.db.execute(query)
+            return events.scalars().all()
+
+        except ValueError as e:
+            print(f"Error fetching events: {e}")
+            raise e
+        except Exception as e:
+            print(f"Error fetching events: {e}")
+            raise e
+
 
     async def get_all(self, current_page: int = 1, page_size: int = 10):
         try:
@@ -166,3 +193,22 @@ class EventRepositoryImplementation(EventRepository):
 
         except Exception as e:
             print(f"Error fetching events: {e}")
+
+    async def substract_ticket(self, event_id: uuid.UUID) -> bool:
+        try:
+            event = await self.db.get(EventModel, event_id)
+
+            if not event:
+                return False
+            
+            event.ticket_quantity -= 1
+            await self.db.commit()
+            await self.db.refresh(event)
+            return True
+
+        except ValueError as e:
+            await self.db.rollback()
+            raise e
+        except Exception as e:
+            await self.db.rollback()
+            raise e

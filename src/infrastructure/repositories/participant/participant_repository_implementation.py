@@ -59,3 +59,38 @@ class ParticipantRepositoryImplementation(ParticipantRepository):
         except Exception as e:
             print(f"Error fetching participant: {e}")
             raise e 
+        
+    async def subtract_balance(self, participant_id: str | uuid.UUID, amount: int) -> bool:
+        try:
+            participant = await self.db.get(ParticipantModel, participant_id)
+            if not participant:
+                return False
+            
+            participant.amount -= amount
+            await self.db.commit()
+            await self.db.refresh(participant)
+            
+            return True
+
+        except Exception as e:
+            print(f"Error subtracting balance: {e}")
+            raise e
+
+    async def add_balance(self, participant_id: str | uuid.UUID, amount: int) -> bool:
+        try:
+            participant = await self.db.get(ParticipantModel, participant_id)
+            if not participant:
+                return False
+            
+            participant.amount += amount
+            await self.db.commit()
+            await self.db.refresh(participant)
+            
+            return True
+
+        except ValueError as e:
+            await self.db.rollback()
+            raise e
+        except Exception as e:
+            await self.db.rollback()
+            raise e

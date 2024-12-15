@@ -28,15 +28,13 @@ class LoginUseCase:
         try:
             user = await self.authentication_repository.get_user_by_username(params.username)
 
-            print("User")
-            print(user.result_value())
-
             if user.is_success():
                 if self.password_service.verify_password(params.password, user.result_value().password):                
                     user = User(
                         user_id=user.result_value().user_id,
                         username=user.result_value().username,
                         email=user.result_value().email,
+                        profile_photo=user.result_value().profile_photo,
                         role=user.result_value().role.value,
                         password=user.result_value().password,
                     )
@@ -49,12 +47,9 @@ class LoginUseCase:
 
                         event_id = event['event_id']
 
-                    details = await self.user_repository.get_user_details(user=user)
+                    access_token = self.jwt_service.create_access_token(user=user, event_id=event_id)
+                    refresh_token = self.jwt_service.create_refresh_token(user=user, event_id=event_id)
 
-                    access_token = self.jwt_service.create_access_token(user=user, event_id=event_id, details=details.result_value())
-                    refresh_token = self.jwt_service.create_refresh_token(user=user, event_id=event_id, details=details.result_value())
-
-                    # Save refresh token to database
                     user.refresh_token = refresh_token
 
                     new_updated_user = await self.user_repository.update_user(user)

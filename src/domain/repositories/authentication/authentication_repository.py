@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
-from ...entities.user.user import User
-from ...entities.result.result import Result
-
+from domain.entities.user.user import User
+from domain.entities.result.result import Result
 
 class AuthenticationRepository(ABC):
     @abstractmethod
@@ -13,5 +12,5 @@ class AuthenticationRepository(ABC):
         pass
 
     @abstractmethod
-    async def update_user_password(self, user_id: str, new_password: str, old_password: str) -> Result[bool]:
+    async def get_logged_in_user(self, user_id: str) -> Result[User | None | dict]:
         pass

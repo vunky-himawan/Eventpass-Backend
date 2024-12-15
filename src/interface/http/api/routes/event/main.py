@@ -5,6 +5,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from json_repair import json_repair
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi_pagination import Page, Params, paginate, set_page
 
 from domain.params.event.main import EventCreationParams, UpdateEventParams
 from domain.usecases.event.main import EventCreationUseCase, EventDeleteUseCase, EventGetUseCase, EventUpdateUseCase
@@ -19,7 +20,22 @@ from src.domain.entities.speaker.speaker import Speaker, SpeakerInput
 from src.infrastructure.repositories.event_speaker.event_speaker_repos import EventSpeakerRepositoryImplementation
 from src.infrastructure.repositories.speaker.speaker_repository import SpeakerRepositoryImplementation
 from src.interface.http.api.schemas.event.main import EventSchema
+from src.infrastructure.repositories.event_organizer.event_organizer_repostiory_implementation import EventOrganizerRepositoryImplementation
+from src.infrastructure.repositories.participant.participant_repository_implementation import ParticipantRepositoryImplementation
+from src.infrastructure.repositories.ticket.ticket_repository_implementation import TicketRepositoryImplementation
+from src.infrastructure.repositories.transaction.transaction_repository_implementation import TransactionRepositoryImplementation
+from src.infrastructure.repositories.user.user_repository_implementation import UserRepositoryImplementation
+from src.domain.usecases.registration_event.registration_event_usecase import RegistrationEventUseCase
+from src.interface.http.api.requests.event.main import RegistrationEventRequest
+from src.domain.params.event.main import RegistrationEventParams
+from src.infrastructure.repositories.event_participant.event_participant_repository_implementation import EventParticipantRepositoryImplementation
+from src.domain.usecases.get_participants_upcoming_events.get_participant_upcoming_events_usecase import GetParticipantUpcomingEventsUseCase
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from infrastructure.services.jwt_token_service import JWTTokenService
+from domain.usecases.check_is_purchased.check_is_purchased_usecase import CheckIsPurchasedUseCase
+
 router = APIRouter()
+bearer_scheme = HTTPBearer()
 
 static_dir = os.getenv("STATIC_DIR", "dist")
 logger = logging.getLogger('uvicorn.error')
@@ -62,6 +78,25 @@ def get_event_get_usecase(db: AsyncSession = Depends(get_db)) -> EventGetUseCase
 
     return EventGetUseCase(
             event_repository=event_repository
+    )
+
+def get_event_registration_usecase(db: AsyncSession = Depends(get_db)) -> RegistrationEventUseCase:
+    event_repository = EventRepositoryImplementation(db)
+    user_repository = UserRepositoryImplementation(db)
+    event_participant_repository = EventParticipantRepositoryImplementation(db)
+    event_organizer_repository = EventOrganizerRepositoryImplementation(db)
+    ticket_repository = TicketRepositoryImplementation(db)
+    transaction_repository = TransactionRepositoryImplementation(db)
+    participant_repository = ParticipantRepositoryImplementation(db)
+
+    return RegistrationEventUseCase(
+        event_repository=event_repository,
+        user_repository=user_repository,
+        event_participant_repository=event_participant_repository,
+        event_organizer_repository=event_organizer_repository,
+        ticket_repository=ticket_repository,
+        transaction_repository=transaction_repository,
+        participant_repository=participant_repository
     )
 
 @router.get(
@@ -326,3 +361,118 @@ async def delete_event(
         data={ "content": result["event"] },
         status_code=200
     )
+
+@router.post('/{event_id}/registration',
+             responses={
+                 200: {"model": SuccessResponse},
+                 400: {"model": ErrorResponse},
+                 500: {"model": ErrorResponse}
+             })
+async def registration_event(event_id: uuid.UUID,
+                             request: RegistrationEventRequest = Depends(RegistrationEventRequest.as_form),
+                             registration_event_use_case: RegistrationEventUseCase = Depends(get_event_registration_usecase)):
+    try:
+        params = RegistrationEventParams(
+            event_id=event_id,
+            participant_id=request.participant_id
+        )
+
+        result = await registration_event_use_case.call(params)
+
+        if result.is_success():
+            return SuccessResponse(message="Registration event successful", data=result.result_value())
+        else:
+            return ErrorResponse(message="Registration event failed", detail=result.error_message())
+    
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+def get_upcoming_participant_events_usecase(
+    db: AsyncSession = Depends(get_db)
+) -> GetParticipantUpcomingEventsUseCase:
+    user_repository = UserRepositoryImplementation(db)
+    jwt_service = JWTTokenService()
+    event_participant_repository = EventParticipantRepositoryImplementation(db)
+
+    return GetParticipantUpcomingEventsUseCase(
+        user_repository=user_repository,
+        jwt_service=jwt_service,
+        event_participant_repository=event_participant_repository,
+    )
+    
+@router.get('/participant/upcoming',
+            responses={
+                200: {"model": SuccessResponse},
+                400: {"model": ErrorResponse},
+                500: {"model": ErrorResponse}
+            }
+)
+async def get_upcoming_participant_events(
+    token: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    params: Params = Depends(),
+    get_participant_upcoming_events_usecase: GetParticipantUpcomingEventsUseCase = Depends(get_upcoming_participant_events_usecase)
+):
+    try:
+        set_page(Page[dict])
+
+        token = token.credentials
+
+        results = await get_participant_upcoming_events_usecase.call(token=token)
+
+        pagination = paginate(results.result_value(), params)
+
+        if results.is_success():
+            return SuccessResponse(message="Get events successful", data=pagination)
+        else:
+            return ErrorResponse(message="Get events failed", detail=results.error_message())
+
+    except ValueError as e:
+        print(e)
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=400, detail=str(e))
+    
+def get_check_is_purchased_usecase(
+    db: AsyncSession = Depends(get_db)
+) -> CheckIsPurchasedUseCase:
+    event_participant_repository = EventParticipantRepositoryImplementation(db)
+    jwt_service = JWTTokenService()
+    user_repository = UserRepositoryImplementation(db)
+    
+    return CheckIsPurchasedUseCase(
+        event_participant_repository=event_participant_repository,
+        jwt_service=jwt_service,
+        user_repository=user_repository
+    )
+    
+@router.get('/check-is-purchased/{event_id}',
+            responses={
+                200: {"model": SuccessResponse},
+                400: {"model": ErrorResponse},
+                500: {"model": ErrorResponse}
+            }
+)
+async def check_is_purchased(
+    event_id: str,
+    authorization: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    check_is_purchased_use_case: CheckIsPurchasedUseCase = Depends(get_check_is_purchased_usecase)
+):
+    try:
+        token = authorization.credentials
+
+        result = await check_is_purchased_use_case.call(event_id=event_id, token=token)
+
+        if result.is_success():
+            return SuccessResponse(message="Check is purchased successful", data=result.result_value())
+        else:
+            return ErrorResponse(message="Check is purchased failed", detail=result.error_message())
+
+    except ValueError as e:
+        print(e)
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=400, detail=str(e))
