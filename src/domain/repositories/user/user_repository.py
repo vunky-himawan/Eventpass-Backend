@@ -57,3 +57,7 @@ class UserRepository(ABC):
     @abstractmethod
     async def get_user_by_refresh_token(self, refresh_token: str) -> Result[User]:
         pass
+
+    @abstractmethod
+    async def change_password(self, user_id: str, old_password: str, new_password: str) -> Result[bool]:
+        pass
