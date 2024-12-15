@@ -61,6 +61,7 @@ class EventOrganizerModel(Base):
     def to_dict(self):
         return {
             "event_organizer_id": self.event_organizer_id,
+            "user_id": self.user_id,
             "organization_name": self.organization_name,
             "address": self.address,
             "phone_number": self.phone_number,

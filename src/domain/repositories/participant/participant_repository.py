@@ -4,6 +4,14 @@ import uuid
 
 class ParticipantRepository(ABC):
     @abstractmethod
+    async def subtract_balance(self, participant_id: str | uuid.UUID, amount: int) -> bool:
+        pass
+
+    @abstractmethod
+    async def add_balance(self, participant_id: str | uuid.UUID, amount: int) -> bool:
+        pass
+
+    @abstractmethod
     async def get_participant_by_participant_id(self, participant_id: str | uuid.UUID) -> Participant:
         pass
 

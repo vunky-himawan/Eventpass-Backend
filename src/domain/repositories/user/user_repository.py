@@ -47,9 +47,13 @@ class UserRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_user_by_user_id(self, user_id: str) -> Result[dict]: 
+    async def get_user_by_user_id(self, user_id: str, with_password: bool | None = None) -> Result[dict]: 
         pass
 
     @abstractmethod
     async def get_user_by_username(self, username: str) -> Result[dict]: 
+        pass
+
+    @abstractmethod
+    async def get_user_by_refresh_token(self, refresh_token: str) -> Result[User]:
         pass

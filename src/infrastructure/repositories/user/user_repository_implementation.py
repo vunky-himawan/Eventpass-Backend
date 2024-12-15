@@ -147,8 +147,10 @@ class UserRepositoryImplementation(UserRepository):
             return Success(value=self._model_to_entity(existing_user))
 
         except ValueError as e:
+            print(e)
             return Failed(message="Terjadi kesalahan")
         except Exception as e:
+            print(e)
             return Failed(message="Terjadi kesalahan")
 
     async def update_user_details(self, user_id: str, details: Participant | EventOrganizer) -> Result[User | Participant | EventOrganizer]:
@@ -165,6 +167,8 @@ class UserRepositoryImplementation(UserRepository):
                 query = select(UserModel).options(joinedload(UserModel.participant)).where(UserModel.user_id == user.user_id)
                 result = await self._db_session.execute(query)
                 user = result.scalar_one()
+
+                print(self._model_to_participant(user.participant))
 
                 return Success(value=self._model_to_participant(user.participant))
             elif user.role == Role.EVENT_ORGANIZER.value:
@@ -184,8 +188,10 @@ class UserRepositoryImplementation(UserRepository):
             return Success(value=None)
 
         except ValueError as e:
+            print(e)
             return Failed(message="Terjadi kesalahan")
         except Exception as e:
+            print(e)
             return Failed(message="Terjadi kesalahan")
 
     async def upload_profile_photo(self, user_id: str, profile_photo: str) -> Result[bool]:
@@ -196,7 +202,7 @@ class UserRepositoryImplementation(UserRepository):
         # Implement user retrieval logic
         pass
 
-    async def get_user_by_user_id(self, user_id: str) -> Result[dict]:
+    async def get_user_by_user_id(self, user_id: str, with_password: bool | None = None) -> Result[dict]:
         try:
             query = select(UserModel).where(UserModel.user_id == user_id)
             result = await self._db_session.execute(query)
@@ -205,7 +211,7 @@ class UserRepositoryImplementation(UserRepository):
             if user is None:
                 return Failed(message="User not found")
             
-            return Success(value=user.to_dict())
+            return Success(value=user.user_to_dict_with_details(with_password=with_password))
 
         except ValueError as e:
             return Failed(message="Terjadi kesalahan")
@@ -228,6 +234,22 @@ class UserRepositoryImplementation(UserRepository):
         except Exception as e:
             return Failed(message="Terjadi kesalahan")
 
+    async def get_user_by_refresh_token(self, refresh_token: str) -> Result[User]:
+        try:
+            query = select(UserModel).where(UserModel.refresh_token == refresh_token)
+            result = await self._db_session.execute(query)
+            user = result.scalar_one()
+
+            if user is None:
+                return Failed(message="User not found")
+            
+            return Success(value=self._model_to_entity(user))
+
+        except ValueError as e:
+            return Failed(message="Terjadi kesalahan")
+        except Exception as e:
+            return Failed(message="Terjadi kesalahan")
+
     def _model_to_entity(self, model: UserModel) -> User:
         return User(
             user_id=model.user_id,
@@ -244,6 +266,7 @@ class UserRepositoryImplementation(UserRepository):
         return Participant(
             participant_name=model.participant_name,
             participant_id=model.participant_id,
+            birth_date=model.birth_date,
             age=model.age,
             gender=model.gender.value,
             amount=model.amount,

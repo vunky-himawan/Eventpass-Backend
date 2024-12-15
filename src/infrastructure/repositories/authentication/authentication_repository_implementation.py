@@ -15,22 +15,15 @@ class AuthenticationRepositoryImplementation(AuthenticationRepository):
             result = await self._db_session.execute(query)
             user = result.scalar_one_or_none()
 
-            print("awdawdaw")
-            print(user)
-
             if user is None:
                 return Failed(message="Pengguna tidak ditemukan")
             
-            print("Nih user")
-            print(user)
             
             return Success(value=self._model_to_entity(user))
 
         except ValueError as e:
-            print(e)
             return Failed(message=str(e))
         except Exception as e:
-            print(e)
             return Failed(message=str(e))
 
     async def get_user_by_email(self, email: str) -> Result[User]:
@@ -46,9 +39,24 @@ class AuthenticationRepositoryImplementation(AuthenticationRepository):
         
         except Exception as e:
             return Failed(message=str(e))
+        
+    async def get_logged_in_user(self, user_id: str) -> Result[User | None | dict]:
+        try:
+            query = select(UserModel).where(UserModel.user_id == user_id) 
+            result = await self._db_session.execute(query)
+            user = result.scalar_one_or_none()
 
-    async def update_user_password(self, user_id: str, new_password: str, old_password: str) -> Result[bool]:
-        pass
+            if user is None:
+                return Failed(message="User not found")
+            
+            return Success(value=user.user_to_dict_with_details())
+
+        except ValueError as e:
+            print(e)
+            return Failed(message=str(e))
+        except Exception as e:
+            print(e)
+            return Failed(message=str(e))
 
     def _model_to_entity(self, user_model: UserModel) -> User:
         return User(user_id=user_model.user_id,

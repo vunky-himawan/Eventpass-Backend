@@ -9,5 +9,6 @@ from .notification import NotificationModel
 from .attendance import AttendanceModel
 from .transaction import TransactionModel
 from .ticket import TicketModel
+from .event_participant import EventParticipantModel
 from .feedback_rating import FeedbackRatingModel
 from .organization_member import OrganizationMemberModel

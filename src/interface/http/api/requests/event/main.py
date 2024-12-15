@@ -119,3 +119,15 @@ class UpdateEventRequest(BaseModel):
 
             speaker=speaker,
         )
+
+class RegistrationEventRequest(BaseModel):
+    participant_id: str
+
+    @classmethod
+    async def as_form(
+        cls,
+        participant_id: str = Form(...),
+    ):
+        return cls(
+            participant_id=participant_id
+        )

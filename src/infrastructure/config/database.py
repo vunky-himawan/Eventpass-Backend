@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from contextlib import asynccontextmanager
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
@@ -38,3 +39,17 @@ async def get_db():
 def init_engine():
     url = f"mysql+aiomysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}/{os.getenv('DB_NAME')}"
     return create_engine(url)
+
+class DatabaseTransaction:
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    @asynccontextmanager
+    async def transaction(self):
+        async with self.db.begin():
+            try:
+                yield
+                await self.db.commit()
+            except:
+                await self.db.rollback()
+                raise

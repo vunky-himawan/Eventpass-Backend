@@ -66,6 +66,12 @@ class ParticipantModel(Base):
             back_populates="participant",
             lazy="selectin"
     )
+    event_participant: Mapped[List["EventParticipantModel"]] = relationship(
+            'EventParticipantModel', 
+            uselist=True, 
+            back_populates="participant",
+            lazy="selectin"
+    )
 
     def to_dict(self):
         return {

@@ -208,7 +208,6 @@ async def get_attendance_history(
         results = await attendance_history_usecase.call(receptionist_id)
 
         if results.is_success():
-            print(results.result_value())
             return paginate(results.result_value(), params)
         else:
             return ErrorResponse(message="History not retrieved", detail=results.error_message())
