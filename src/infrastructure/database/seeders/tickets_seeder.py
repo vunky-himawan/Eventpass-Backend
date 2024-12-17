@@ -2,6 +2,7 @@ import secrets
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from infrastructure.database.models.transaction import TransactionModel
+from infrastructure.database.models.event_participant import EventParticipantModel
 from infrastructure.database.models.event import EventModel
 from infrastructure.database.models.ticket import TicketModel
 
@@ -34,9 +35,18 @@ async def tickets_seeder(db: AsyncSession):
             )
 
             db.add(new_ticket)
+            await db.commit()
+            await db.refresh(new_ticket)
+
+            event_participant = EventParticipantModel(
+                event_id=event.event_id,
+                participant_id=transaction.participant_id,
+                ticket_id=new_ticket.ticket_id
+            )
+
+            db.add(event_participant)
 
         await db.commit()
-        await db.refresh(new_ticket)
 
     except Exception as e:
         await db.rollback()
